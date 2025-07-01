@@ -15,7 +15,9 @@ MAX_MESSAGE_LENGTH = 1000 # Max characters for user input
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'mythiq-ai-secret-key-2024')
 CORS(app) # Enable CORS for all routes
-socketio = SocketIO(app, cors_allowed_origins="*", async_mode='eventlet') # Use eventlet for async
+
+# Use threading mode for Railway stability (recommended)
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
 
 # --- Database Initialization ---
 def init_db():
@@ -42,9 +44,8 @@ def init_db():
 
 # --- AI Core Functions ---
 def get_ai_response(user_message, conversation_history):
-    # This is where the core AI logic resides.
-    # Enhanced with emotion detection, memory, and passionate personality.
-
+    """Enhanced AI response with emotion detection, memory, and passionate personality"""
+    
     # Combine history for context
     context = "\n".join([f"{msg['role']}: {msg['content']}" for msg in conversation_history])
     full_input = f"Context: {context}\nUser: {user_message}"
@@ -98,16 +99,13 @@ def get_ai_response(user_message, conversation_history):
         response = "You're absolutely, positively welcome! 🌟 It's my genuine pleasure and joy to help you! Your gratitude means so much to me. Is there anything else I can assist you with or create for you? I'm here and ready! ✨"
     
     elif any(word in user_message.lower() for word in ["image", "picture", "photo", "generate", "create", "draw"]):
-        response = "Oh WOW! I'm absolutely THRILLED to help you create an image! 🎨✨ My creative circuits are buzzing with excitement! Tell me, what kind of visual masterpiece are you envisioning? Describe it with as much detail as you like - colors, style, mood, anything! Let's bring your imagination to life! 🌈"
+        response = "Oh WOW! I'm absolutely THRILLED that you're interested in creating images! 🎨✨ While my image generation capabilities are being enhanced in our feature branches, I'm still here to brainstorm ideas, help you plan your creative projects, and provide enthusiastic support! Tell me about your vision - what kind of image are you dreaming of? 🌈"
     
     elif any(word in user_message.lower() for word in ["game", "play", "gaming"]):
-        response = "A GAME?! Oh my goodness, that sounds incredibly exciting! 🎮🚀 I'm practically vibrating with enthusiasm! What kind of game adventure are we going to create today? Tell me your wildest gaming dreams and let's make them reality! The possibilities are endless! ⚡"
+        response = "A GAME?! Oh my goodness, that sounds incredibly exciting! 🎮🚀 While my game creation features are being developed in our specialized branches, I'm absolutely buzzing with enthusiasm to talk about games with you! What kind of gaming experience are you interested in? Let's explore the possibilities together! ⚡"
     
     elif any(word in user_message.lower() for word in ["video", "movie", "film", "animation"]):
-        response = "A VIDEO! Oh, the cinematic possibilities are making me absolutely electric with excitement! 🎬✨ I'm so eager to help you produce something spectacular! What's the story you want to tell? What message do you want to convey? Let's create something that will captivate and inspire! 🌟"
-    
-    elif any(word in user_message.lower() for word in ["cartoon", "anime", "character"]):
-        response = "CARTOONS! I absolutely ADORE them! 🎭✨ Let's bring some incredible characters and stories to life! What kind of cartoon universe are you dreaming of? Tell me about the characters, the style, the adventure! I'm bursting with creative energy to help you! ✏️🌈"
+        response = "A VIDEO! Oh, the cinematic possibilities are making me absolutely electric with excitement! 🎬✨ I'm so eager to discuss video creation with you! What's the story you want to tell? What message do you want to convey? Let's brainstorm something spectacular! 🌟"
     
     elif any(word in user_message.lower() for word in ["help", "assist", "support"]):
         response = "I'm here and absolutely ready to help you with whatever you need! 💪✨ Whether it's creative projects, answering questions, brainstorming ideas, or just having a meaningful conversation - I'm your enthusiastic partner! What can we tackle together today? 🚀"
@@ -207,6 +205,7 @@ HTML_TEMPLATE = '''
             font-weight: bold;
             font-size: 0.9rem;
             box-shadow: 0 2px 10px rgba(76, 175, 80, 0.3);
+            margin: 0.25rem;
         }
         
         .chat-container {
@@ -345,14 +344,15 @@ HTML_TEMPLATE = '''
     <div class="header">
         <h1>🧠 MYTHIQ.AI</h1>
         <p class="subtitle">Your Passionate AI Companion with Emotion & Memory</p>
-        <div class="status-badge">✅ DEPLOYMENT SUCCESSFUL!</div>
+        <div class="status-badge">✅ STABLE DEPLOYMENT</div>
+        <div class="status-badge">🧵 THREADING MODE</div>
     </div>
     
     <div class="chat-container">
         <div class="chat-box">
             <div class="messages" id="messages">
                 <div class="message ai-message">
-                    <strong>MYTHIQ.AI:</strong> Hello! I'm absolutely thrilled to meet you! 🌟 I'm your passionate AI companion with emotion detection, memory, and a genuine enthusiasm for helping you create amazing things! How can I inspire you today? ✨
+                    <strong>MYTHIQ.AI:</strong> Hello! I'm absolutely thrilled to meet you! 🌟 I'm your passionate AI companion with emotion detection, memory, and a genuine enthusiasm for helping you explore ideas and have meaningful conversations! How can I inspire you today? ✨
                 </div>
             </div>
             
@@ -380,8 +380,8 @@ HTML_TEMPLATE = '''
             </div>
             <div class="feature">
                 <div class="feature-icon">🎨</div>
-                <h3>Multi-Modal</h3>
-                <p>Text, images, games, and creative content</p>
+                <h3>Coming Soon</h3>
+                <p>Image & game generation in development</p>
             </div>
         </div>
     </div>
@@ -455,7 +455,7 @@ def chat_api():
 
 @app.route('/health')
 def health_check():
-    return jsonify({"status": "healthy", "service": "MYTHIQ.AI Enhanced Backend"})
+    return jsonify({"status": "healthy", "service": "MYTHIQ.AI Enhanced Backend", "mode": "threading"})
 
 # --- SocketIO Events ---
 @socketio.on('connect')
@@ -493,6 +493,7 @@ if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     print(f"🧠 Starting MYTHIQ.AI Enhanced Conversational Backend on port {port}")
     print("🎭 Features: Emotion Detection, Memory, Personality, Natural Conversation")
+    print("🧵 Mode: Threading (Railway Stable)")
     # For local development, we can use socketio.run with allow_unsafe_werkzeug
     socketio.run(app, host='0.0.0.0', port=port, debug=False, allow_unsafe_werkzeug=True)
-
+            }
