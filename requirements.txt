@@ -1,0 +1,4 @@
+flask==2.3.3
+flask-socketio==5.5.1
+gunicorn==21.2.0
+
