@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-"""
 🧠 MYTHIQ.AI Enhanced Conversational Backend
 Advanced AI system with emotion, memory, and natural conversation
 """
@@ -613,4 +611,3 @@ if __name__ == '__main__':
     print(f"🧠 Starting MYTHIQ.AI Enhanced Conversational Backend on port {port}")
     print("🎭 Features: Emotion Detection, Memory, Personality, Natural Conversation")
     socketio.run(app, host='0.0.0.0', port=port, debug=False)
-
