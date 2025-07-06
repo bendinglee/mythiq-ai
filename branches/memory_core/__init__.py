@@ -1,35 +1,50 @@
-"""
-MYTHIQ.AI Memory Core Branch - Bulletproof Edition
-Phase 4: Memory & Learning - Conversation Memory & User Learning
-100% Compatible with main.py Blueprint registration
+# 🧠 SELF-LEARNING AI BRAIN INITIALIZER
+# This starts up the learning system
 
-FILE LOCATION: branches/memory_core/__init__.py
-"""
+from .controller import memory_api
 
-# Import with error handling for bulletproof loading
-try:
-    from .controller import memory_api
-    IMPORT_SUCCESS = True
-    IMPORT_ERROR = None
-except ImportError as e:
-    # Fallback for debugging
-    memory_api = None
-    IMPORT_SUCCESS = False
-    IMPORT_ERROR = str(e)
+# Brain information
+BRANCH_NAME = "Memory Core"
+BRANCH_VERSION = "2.0.0"
+BRANCH_DESCRIPTION = "Self-learning AI memory and feedback system"
 
-# Metadata for main.py compatibility
-__version__ = "4.0-bulletproof"
-__branch_name__ = "memory_core"
-__api_blueprint__ = "memory_api"
+# Learning capabilities
+CAPABILITIES = [
+    "conversation_memory",
+    "feedback_learning", 
+    "pattern_recognition",
+    "similarity_search",
+    "confidence_scoring",
+    "learning_analytics"
+]
 
-# Export exactly what main.py expects
-__all__ = ["memory_api"]
+# API endpoints
+ENDPOINTS = [
+    {"path": "/memory/learn", "method": "POST", "description": "Learn from user interactions"},
+    {"path": "/memory/recall", "method": "POST", "description": "Recall similar conversations"},
+    {"path": "/memory/feedback", "method": "POST", "description": "Update feedback on responses"},
+    {"path": "/memory/stats", "method": "GET", "description": "Get learning statistics"}
+]
 
-# Status for debugging
-STATUS = {
-    "import_success": IMPORT_SUCCESS,
-    "import_error": IMPORT_ERROR,
-    "blueprint_name": __api_blueprint__,
-    "version": __version__
-}
+def get_branch_info():
+    """Get information about this learning branch"""
+    return {
+        "name": BRANCH_NAME,
+        "version": BRANCH_VERSION,
+        "description": BRANCH_DESCRIPTION,
+        "capabilities": CAPABILITIES,
+        "endpoints": ENDPOINTS,
+        "status": "active",
+        "learning_enabled": True
+    }
 
+def initialize_branch():
+    """Initialize the self-learning memory branch"""
+    print(f"🧠 Initializing {BRANCH_NAME} v{BRANCH_VERSION}")
+    print(f"📚 Learning capabilities: {len(CAPABILITIES)}")
+    print(f"🔗 API endpoints: {len(ENDPOINTS)}")
+    print("🎓 Self-learning system ready!")
+    return True
+
+# Export everything
+__all__ = ['memory_api', 'get_branch_info', 'initialize_branch']
