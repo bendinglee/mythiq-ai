@@ -1,193 +1,421 @@
-"""
-MYTHIQ.AI Memory Core Controller - Bulletproof Edition
-Conversation Logging, Memory Refinement, and User Learning
-Engineered for 100% compatibility and zero failure points
-
-FILE LOCATION: branches/memory_core/controller.py
-"""
+# 🧠 SELF-LEARNING AI BRAIN
+# This makes your AI remember and learn from users
 
 from flask import Blueprint, request, jsonify
-import uuid
-import time
+import json
+import os
 from datetime import datetime
+from sentence_transformers import SentenceTransformer
+import sqlite3
 
-# Create Blueprint with exact name expected by main.py
+# Create the brain blueprint
 memory_api = Blueprint('memory_api', __name__)
 
-class MemoryController:
-    def __init__(self):
-        self.name = "Memory Core"
-        self.version = "5.0-bulletproof"
-        self.status = "active"
-        self.capabilities = [
-            "Conversation Logging",
-            "User Profile Management",
-            "Preference Learning",
-            "Contextual Recall",
-            "Fact Evolution",
-            "Memory Refinement",
-            "Long-Term Memory Storage",
-            "Personalized Interactions"
-        ]
-        self.memory_store = []  # Simple in-memory store for demonstration
-        self.user_profiles = {}
-        self.total_memories = 0
-        self.last_cleanup = datetime.now()
-        
-    def log_conversation(self, user_id, message, response, metadata=None):
-        """Log a conversation turn with bulletproof error handling"""
-        try:
-            memory_id = f"mem_{uuid.uuid4().hex[:8]}"
-            log_entry = {
-                "id": memory_id,
-                "user_id": user_id,
-                "timestamp": datetime.now().isoformat(),
-                "message": message,
-                "response": response,
-                "metadata": metadata if metadata is not None else {},
-                "branch": "memory_core"
-            }
-            self.memory_store.append(log_entry)
-            self.total_memories += 1
-            
-            # Simulate user profile update
-            if user_id not in self.user_profiles:
-                self.user_profiles[user_id] = {"interactions": 0, "last_active": None}
-            self.user_profiles[user_id]["interactions"] += 1
-            self.user_profiles[user_id]["last_active"] = datetime.now().isoformat()
-            
-            return {"success": True, "memory_id": memory_id}
-        except Exception as e:
-            return {"success": False, "error": str(e)}
-            
-    def get_user_memory(self, user_id, limit=10):
-        """Retrieve recent memories for a user"""
-        try:
-            user_memories = [m for m in self.memory_store if m.get("user_id") == user_id]
-            return sorted(user_memories, key=lambda x: x["timestamp"], reverse=True)[:limit]
-        except Exception as e:
-            return {"error": str(e)}
+# Initialize the learning model (free!)
+try:
+    learning_model = SentenceTransformer('all-MiniLM-L6-v2')
+    print("🧠 Learning brain loaded successfully!")
+except:
+    learning_model = None
+    print("⚠️ Learning brain not loaded - will use basic memory")
 
-    def get_status(self):
-        """Get comprehensive controller status"""
-        return {
-            "name": self.name,
-            "version": self.version,
-            "status": self.status,
-            "capabilities": self.capabilities,
-            "total_memories_logged": self.total_memories,
-            "unique_users": len(self.user_profiles),
-            "memory_store_size": len(self.memory_store),
-            "last_cleanup": self.last_cleanup.isoformat(),
-            "uptime": "99.9%",
-            "last_updated": datetime.now().isoformat(),
-            "api_endpoints": [
-                "/api/memory/log",
-                "/api/memory/status",
-                "/api/memory/user/<user_id>"
-            ]
-        }
+# Database setup
+def init_memory_database():
+    """Create the memory database if it doesn't exist"""
+    conn = sqlite3.connect('ai_memory.db')
+    cursor = conn.cursor()
+    
+    # Create conversations table
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS conversations (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_input TEXT NOT NULL,
+            ai_response TEXT NOT NULL,
+            feedback TEXT DEFAULT 'neutral',
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+            plugin_used TEXT,
+            confidence_score REAL DEFAULT 0.5
+        )
+    ''')
+    
+    # Create learning patterns table
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS learning_patterns (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            pattern_type TEXT NOT NULL,
+            pattern_data TEXT NOT NULL,
+            success_rate REAL DEFAULT 0.5,
+            usage_count INTEGER DEFAULT 1,
+            last_updated DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+    
+    conn.commit()
+    conn.close()
+    print("🗄️ Memory database initialized!")
 
-# Global controller instance
-memory_controller = MemoryController()
+# Initialize database when module loads
+init_memory_database()
 
-# Bulletproof API endpoints
-@memory_api.route('/memory/log', methods=['POST'])
-def log_memory():
-    """Log a conversation turn - Bulletproof endpoint"""
+@memory_api.route('/memory/learn', methods=['POST'])
+def learn_from_interaction():
+    """
+    🧠 LEARNING ENDPOINT
+    Saves user interactions and learns from them
+    """
     try:
-        if request.is_json:
-            data = request.get_json() or {}
-        else:
-            data = request.form.to_dict()
-            
-        user_id = data.get('user_id', 'anonymous')
-        message = data.get('message', '').strip()
-        response = data.get('response', '').strip()
-        metadata = data.get('metadata', {})
+        data = request.get_json() or {}
         
-        if not message or not response:
+        user_input = data.get('user_input', '')
+        ai_response = data.get('ai_response', '')
+        feedback = data.get('feedback', 'neutral')  # positive, negative, neutral
+        plugin_used = data.get('plugin_used', 'unknown')
+        
+        if not user_input or not ai_response:
             return jsonify({
                 "success": False,
-                "error": "Both message and response are required",
-                "code": "MISSING_DATA"
+                "error": "Both user_input and ai_response are required"
             }), 400
-            
-        result = memory_controller.log_conversation(user_id, message, response, metadata)
         
-        if not result.get("success"):
-            return jsonify({
-                "success": False,
-                "error": result.get("error", "Unknown error"),
-                "code": "LOGGING_ERROR"
-            }), 500
-            
+        # Save to memory database
+        conn = sqlite3.connect('ai_memory.db')
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            INSERT INTO conversations 
+            (user_input, ai_response, feedback, plugin_used)
+            VALUES (?, ?, ?, ?)
+        ''', (user_input, ai_response, feedback, plugin_used))
+        
+        conn.commit()
+        conversation_id = cursor.lastrowid
+        conn.close()
+        
+        # Learn from the interaction
+        learning_result = analyze_and_learn(user_input, ai_response, feedback)
+        
         return jsonify({
             "success": True,
-            "message": "💾 Conversation logged successfully!",
-            "memory_id": result["memory_id"],
-            "user_id": user_id,
-            "timestamp": datetime.now().isoformat(),
-            "branch": "memory_core"
+            "message": "🧠 AI learned from this interaction!",
+            "conversation_id": conversation_id,
+            "learning_insights": learning_result,
+            "memory_status": "updated"
         }), 200
         
     except Exception as e:
         return jsonify({
             "success": False,
-            "error": str(e),
-            "code": "INTERNAL_ERROR",
-            "branch": "memory_core"
+            "error": f"Learning failed: {str(e)}"
         }), 500
 
-@memory_api.route('/memory/status', methods=['GET'])
-def get_memory_status():
-    """Get memory controller status - Bulletproof endpoint"""
+@memory_api.route('/memory/recall', methods=['POST'])
+def recall_similar_conversations():
+    """
+    🔍 MEMORY RECALL
+    Finds similar past conversations to help answer new questions
+    """
     try:
-        return jsonify(memory_controller.get_status()), 200
-    except Exception as e:
-        return jsonify({
-            "error": str(e),
-            "branch": "memory_core",
-            "status": "error"
-        }), 500
-
-@memory_api.route('/memory/user/<user_id>', methods=['GET'])
-def get_user_memory(user_id):
-    """Get user's conversation history - Bulletproof endpoint"""
-    try:
-        limit = int(request.args.get('limit', 10))
-        memories = memory_controller.get_user_memory(user_id, limit)
+        data = request.get_json() or {}
+        query = data.get('query', '')
+        limit = data.get('limit', 5)
         
-        if isinstance(memories, dict) and "error" in memories:
+        if not query:
             return jsonify({
                 "success": False,
-                "error": memories["error"],
-                "user_id": user_id
-            }), 500
-            
+                "error": "Query is required"
+            }), 400
+        
+        # Find similar conversations
+        similar_conversations = find_similar_conversations(query, limit)
+        
+        # Get learning insights
+        insights = get_learning_insights(query)
+        
         return jsonify({
             "success": True,
-            "user_id": user_id,
-            "memories": memories,
-            "count": len(memories),
-            "branch": "memory_core"
+            "query": query,
+            "similar_conversations": similar_conversations,
+            "learning_insights": insights,
+            "total_memories": len(similar_conversations)
         }), 200
+        
     except Exception as e:
         return jsonify({
             "success": False,
-            "error": str(e),
-            "user_id": user_id,
-            "branch": "memory_core"
+            "error": f"Memory recall failed: {str(e)}"
         }), 500
 
-# Health check endpoint
-@memory_api.route('/memory/health', methods=['GET'])
-def health_check():
-    """Health check endpoint"""
-    return jsonify({
-        "status": "healthy",
-        "branch": "memory_core",
-        "version": memory_controller.version,
-        "timestamp": datetime.now().isoformat()
-    }), 200
+@memory_api.route('/memory/feedback', methods=['POST'])
+def update_feedback():
+    """
+    👍👎 FEEDBACK SYSTEM
+    Users can rate AI responses to improve learning
+    """
+    try:
+        data = request.get_json() or {}
+        conversation_id = data.get('conversation_id')
+        feedback = data.get('feedback')  # 'positive', 'negative', 'neutral'
+        
+        if not conversation_id or not feedback:
+            return jsonify({
+                "success": False,
+                "error": "conversation_id and feedback are required"
+            }), 400
+        
+        # Update feedback in database
+        conn = sqlite3.connect('ai_memory.db')
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            UPDATE conversations 
+            SET feedback = ?, confidence_score = ?
+            WHERE id = ?
+        ''', (feedback, get_confidence_score(feedback), conversation_id))
+        
+        conn.commit()
+        conn.close()
+        
+        # Update learning patterns
+        update_learning_patterns(conversation_id, feedback)
+        
+        return jsonify({
+            "success": True,
+            "message": f"🧠 Feedback recorded: {feedback}",
+            "conversation_id": conversation_id,
+            "learning_status": "updated"
+        }), 200
+        
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": f"Feedback update failed: {str(e)}"
+        }), 500
 
+@memory_api.route('/memory/stats', methods=['GET'])
+def memory_statistics():
+    """
+    📊 LEARNING STATISTICS
+    Shows how much the AI has learned
+    """
+    try:
+        conn = sqlite3.connect('ai_memory.db')
+        cursor = conn.cursor()
+        
+        # Get conversation stats
+        cursor.execute('SELECT COUNT(*) FROM conversations')
+        total_conversations = cursor.fetchone()[0]
+        
+        cursor.execute('SELECT COUNT(*) FROM conversations WHERE feedback = "positive"')
+        positive_feedback = cursor.fetchone()[0]
+        
+        cursor.execute('SELECT COUNT(*) FROM conversations WHERE feedback = "negative"')
+        negative_feedback = cursor.fetchone()[0]
+        
+        cursor.execute('SELECT plugin_used, COUNT(*) FROM conversations GROUP BY plugin_used')
+        plugin_usage = dict(cursor.fetchall())
+        
+        cursor.execute('SELECT AVG(confidence_score) FROM conversations')
+        avg_confidence = cursor.fetchone()[0] or 0.5
+        
+        conn.close()
+        
+        # Calculate learning metrics
+        learning_rate = (positive_feedback / max(total_conversations, 1)) * 100
+        improvement_score = min(100, learning_rate + (avg_confidence * 50))
+        
+        return jsonify({
+            "success": True,
+            "learning_statistics": {
+                "total_conversations": total_conversations,
+                "positive_feedback": positive_feedback,
+                "negative_feedback": negative_feedback,
+                "learning_rate": round(learning_rate, 2),
+                "improvement_score": round(improvement_score, 2),
+                "average_confidence": round(avg_confidence, 3),
+                "plugin_usage": plugin_usage,
+                "memory_status": "active",
+                "learning_model_loaded": learning_model is not None
+            }
+        }), 200
+        
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": f"Statistics failed: {str(e)}"
+        }), 500
+
+def analyze_and_learn(user_input, ai_response, feedback):
+    """Analyze interaction and extract learning patterns"""
+    try:
+        insights = {
+            "input_length": len(user_input),
+            "response_length": len(ai_response),
+            "feedback_type": feedback,
+            "learning_points": []
+        }
+        
+        # Analyze input patterns
+        if len(user_input) < 10:
+            insights["learning_points"].append("Short queries detected")
+        elif len(user_input) > 100:
+            insights["learning_points"].append("Complex queries detected")
+        
+        # Analyze feedback patterns
+        if feedback == "positive":
+            insights["learning_points"].append("Successful response pattern identified")
+        elif feedback == "negative":
+            insights["learning_points"].append("Response improvement needed")
+        
+        # Store learning pattern
+        conn = sqlite3.connect('ai_memory.db')
+        cursor = conn.cursor()
+        
+        pattern_data = json.dumps({
+            "input_type": classify_input_type(user_input),
+            "response_quality": feedback,
+            "context": user_input[:50] + "..." if len(user_input) > 50 else user_input
+        })
+        
+        cursor.execute('''
+            INSERT INTO learning_patterns (pattern_type, pattern_data)
+            VALUES (?, ?)
+        ''', ("interaction_analysis", pattern_data))
+        
+        conn.commit()
+        conn.close()
+        
+        return insights
+        
+    except Exception as e:
+        return {"error": str(e)}
+
+def find_similar_conversations(query, limit=5):
+    """Find conversations similar to the current query"""
+    try:
+        conn = sqlite3.connect('ai_memory.db')
+        cursor = conn.cursor()
+        
+        # Simple keyword-based similarity for now
+        # In production, you'd use embeddings
+        cursor.execute('''
+            SELECT user_input, ai_response, feedback, timestamp
+            FROM conversations
+            WHERE user_input LIKE ? OR ai_response LIKE ?
+            ORDER BY timestamp DESC
+            LIMIT ?
+        ''', (f'%{query}%', f'%{query}%', limit))
+        
+        results = cursor.fetchall()
+        conn.close()
+        
+        similar_conversations = []
+        for row in results:
+            similar_conversations.append({
+                "user_input": row[0],
+                "ai_response": row[1],
+                "feedback": row[2],
+                "timestamp": row[3],
+                "similarity_score": calculate_similarity(query, row[0])
+            })
+        
+        return similar_conversations
+        
+    except Exception as e:
+        return []
+
+def get_learning_insights(query):
+    """Get insights about what the AI has learned"""
+    try:
+        conn = sqlite3.connect('ai_memory.db')
+        cursor = conn.cursor()
+        
+        # Get patterns related to this type of query
+        input_type = classify_input_type(query)
+        
+        cursor.execute('''
+            SELECT pattern_data, success_rate, usage_count
+            FROM learning_patterns
+            WHERE pattern_type = ?
+            ORDER BY usage_count DESC
+            LIMIT 3
+        ''', (input_type,))
+        
+        patterns = cursor.fetchall()
+        conn.close()
+        
+        insights = {
+            "query_type": input_type,
+            "learned_patterns": len(patterns),
+            "recommendations": []
+        }
+        
+        for pattern in patterns:
+            try:
+                pattern_info = json.loads(pattern[0])
+                insights["recommendations"].append({
+                    "pattern": pattern_info.get("context", "Unknown"),
+                    "success_rate": pattern[1],
+                    "usage_count": pattern[2]
+                })
+            except:
+                pass
+        
+        return insights
+        
+    except Exception as e:
+        return {"error": str(e)}
+
+def classify_input_type(user_input):
+    """Classify the type of user input"""
+    user_input_lower = user_input.lower()
+    
+    if any(word in user_input_lower for word in ['solve', 'calculate', 'math', '=', '+', '-', '*', '/']):
+        return "math_query"
+    elif any(word in user_input_lower for word in ['create', 'generate', 'make', 'image', 'picture']):
+        return "creation_query"
+    elif any(word in user_input_lower for word in ['video', 'animation', 'movie']):
+        return "video_query"
+    elif '?' in user_input:
+        return "question"
+    else:
+        return "general_query"
+
+def calculate_similarity(query1, query2):
+    """Simple similarity calculation"""
+    words1 = set(query1.lower().split())
+    words2 = set(query2.lower().split())
+    
+    if not words1 or not words2:
+        return 0.0
+    
+    intersection = words1.intersection(words2)
+    union = words1.union(words2)
+    
+    return len(intersection) / len(union)
+
+def get_confidence_score(feedback):
+    """Convert feedback to confidence score"""
+    if feedback == "positive":
+        return 0.9
+    elif feedback == "negative":
+        return 0.1
+    else:
+        return 0.5
+
+def update_learning_patterns(conversation_id, feedback):
+    """Update learning patterns based on feedback"""
+    try:
+        # This would update the AI's understanding
+        # For now, just log the learning event
+        print(f"🧠 Learning from conversation {conversation_id}: {feedback}")
+        
+        # In a more advanced system, you'd:
+        # 1. Update model weights
+        # 2. Adjust response strategies
+        # 3. Improve prompt engineering
+        
+    except Exception as e:
+        print(f"Learning update failed: {e}")
+
+# Export the blueprint
+__all__ = ['memory_api']
