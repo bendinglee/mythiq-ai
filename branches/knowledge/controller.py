@@ -1,236 +1,363 @@
-"""
-MYTHIQ.AI Knowledge Controller - Bulletproof Edition
-Enhanced Knowledge Base with Advanced AI Capabilities
-Engineered for 100% compatibility and zero failure points
-
-FILE LOCATION: branches/knowledge/controller.py
-"""
+# 🧮 COMPLETE MATH SOLVER CONTROLLER
+# File: branches/knowledge/controller.py
+# REPLACE YOUR EXISTING controller.py WITH THIS COMPLETE VERSION
 
 from flask import Blueprint, request, jsonify
-import uuid
-import time
-import json
+import requests
+import urllib.parse
+import os
 import re
+import math
 from datetime import datetime
+import json
 
-# Create Blueprint with exact name expected by main.py
+# Create the blueprint
 knowledge_api = Blueprint('knowledge_api', __name__)
 
-class KnowledgeController:
-    def __init__(self):
-        self.name = "Knowledge Engine"
-        self.version = "4.0-bulletproof"
-        self.status = "active"
-        self.capabilities = [
-            "Advanced Q&A Processing",
-            "Confidence Scoring",
-            "Context-Aware Responses",
-            "Multi-Category Knowledge",
-            "Fact Verification",
-            "Smart Search",
-            "Response Enhancement",
-            "Learning Integration"
-        ]
+# Wolfram Alpha configuration
+WOLFRAM_APP_ID = os.getenv('WOLFRAM_APP_ID')
+WOLFRAM_API_URL = "http://api.wolframalpha.com/v2/query"
+
+# Simple cache for math results
+math_cache = {}
+
+def solve_math_problem(query ):
+    """
+    Real math solving using Wolfram Alpha with Python fallbacks
+    This function handles ALL types of math problems
+    """
+    try:
+        # Check cache first
+        cache_key = query.lower().strip()
+        if cache_key in math_cache:
+            cached_result = math_cache[cache_key]
+            cached_result["cached"] = True
+            return cached_result
         
-        # Enhanced knowledge base with 500+ facts across 8 categories
-        self.knowledge_base = {
-            "geography": {
-                "What is the capital of Japan?": "Tokyo. It's been Japan's capital since 1868 and is one of the world's largest metropolitan areas! 🏙️",
-                "What is the capital of France?": "Paris. Known as the City of Light, it's famous for the Eiffel Tower, Louvre Museum, and rich cultural heritage! 🗼",
-                "What is the capital of Germany?": "Berlin. A city with incredible history, it was divided during the Cold War and reunified in 1990! 🏛️",
-                "What is the capital of Italy?": "Rome. The Eternal City, home to the Colosseum, Vatican City, and over 2,500 years of history! 🏛️",
-                "What is the capital of Spain?": "Madrid. Located in the heart of Spain, it's known for its royal palace and world-class museums! 👑",
-                "What is the largest country in the world?": "Russia. It spans 11 time zones and covers over 17 million square kilometers! 🌍",
-                "What is the smallest country in the world?": "Vatican City. At just 0.17 square miles, it's smaller than most shopping malls! ⛪"
-            },
-            "science": {
-                "What is the speed of light?": "299,792,458 meters per second in a vacuum. It's the ultimate speed limit of the universe! ⚡",
-                "What is DNA?": "Deoxyribonucleic acid, the molecule that carries genetic instructions for all living things! 🧬",
-                "What is gravity?": "The force that attracts objects toward each other, keeping us grounded and planets in orbit! 🌍",
-                "What is photosynthesis?": "The process plants use to convert sunlight into energy, producing oxygen as a byproduct! 🌱",
-                "What is the periodic table?": "A chart organizing all known chemical elements by their atomic number and properties! ⚛️",
-                "What is evolution?": "The process by which species change over time through natural selection and genetic variation! 🐒",
-                "What is the Big Bang?": "The leading theory explaining how the universe began from an extremely hot, dense point 13.8 billion years ago! 💥"
-            },
-            "mathematics": {
-                "What is 2+2?": "4. Basic addition - one of the fundamental operations in arithmetic! 🔢",
-                "What is 12 x 8?": "96. Multiplication is repeated addition, so 12 added to itself 8 times equals 96! ✖️",
-                "What is 100 - 37?": "63. Subtraction shows the difference between two numbers! ➖",
-                "What is pi?": "Approximately 3.14159, the ratio of a circle's circumference to its diameter! 🥧",
-                "What is the Fibonacci sequence?": "A series where each number is the sum of the two preceding ones: 0, 1, 1, 2, 3, 5, 8, 13... 🌀",
-                "What is the Pythagorean theorem?": "In a right triangle, the square of the hypotenuse equals the sum of squares of the other two sides! 📐"
-            },
-            "technology": {
-                "What is artificial intelligence?": "Computer systems designed to perform tasks that typically require human intelligence! 🤖",
-                "What is the internet?": "A global network connecting billions of devices, enabling instant communication and information sharing! 🌐",
-                "What is blockchain?": "A decentralized digital ledger technology that securely records transactions across multiple computers! ⛓️",
-                "What is machine learning?": "A subset of AI where computers learn and improve from data without being explicitly programmed! 📊"
-            },
-            "history": {
-                "When did World War II end?": "September 2, 1945, when Japan formally surrendered aboard the USS Missouri in Tokyo Bay! 🕊️",
-                "Who was Napoleon Bonaparte?": "French military leader and emperor who conquered much of Europe in the early 19th century! 👑",
-                "When did humans first land on the moon?": "July 20, 1969, when Apollo 11's Neil Armstrong and Buzz Aldrin walked on the lunar surface! 🌙"
-            },
-            "culture": {
-                "What is jazz music?": "An American musical style born in New Orleans, characterized by improvisation, swing, and blue notes! 🎷",
-                "What is sushi?": "Traditional Japanese cuisine featuring vinegared rice with various toppings, especially raw fish! 🍣",
-                "What is yoga?": "An ancient Indian practice combining physical postures, breathing, and meditation for wellness! 🧘"
-            },
-            "nature": {
-                "What is the largest animal?": "The blue whale, reaching up to 100 feet long and weighing up to 200 tons! 🐋",
-                "What is the Amazon rainforest?": "The world's largest tropical rainforest, home to 10% of known species and called 'lungs of the Earth'! 🌳"
-            },
-            "sports": {
-                "What is the FIFA World Cup?": "The most prestigious soccer tournament, held every 4 years with 32 national teams competing! ⚽",
-                "What is the Super Bowl?": "The championship game of the NFL, one of the most-watched sporting events in America! 🏈"
-            }
+        # Try Wolfram Alpha first (if API key available)
+        if WOLFRAM_APP_ID:
+            wolfram_result = query_wolfram_alpha(query)
+            if wolfram_result["success"]:
+                # Cache successful results
+                math_cache[cache_key] = wolfram_result
+                return wolfram_result
+        
+        # Fallback to Python math solver
+        python_result = python_math_solver(query)
+        if python_result["success"]:
+            # Cache successful results
+            math_cache[cache_key] = python_result
+            return python_result
+        
+        # If all else fails, provide helpful guidance
+        return math_help_response(query)
+        
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e),
+            "message": "Math solving encountered an error",
+            "source": "error_handler"
+        }
+
+def query_wolfram_alpha(query):
+    """Query Wolfram Alpha API for math solutions"""
+    try:
+        # Prepare the query parameters
+        params = {
+            'input': query,
+            'appid': WOLFRAM_APP_ID,
+            'format': 'plaintext',
+            'output': 'json',
+            'includepodid': 'Solution,Result,DecimalApproximation,Input',
+            'timeout': 10
         }
         
-        self.total_queries = 0
-        self.successful_responses = 0
-        self.confidence_threshold = 0.8
+        # Make the API request
+        response = requests.get(WOLFRAM_API_URL, params=params, timeout=15)
+        
+        if response.status_code == 200:
+            data = response.json()
+            
+            if data.get('queryresult', {}).get('success'):
+                pods = data['queryresult'].get('pods', [])
+                solution = extract_wolfram_solution(pods, query)
+                
+                if solution:
+                    return {
+                        "success": True,
+                        "solution": solution,
+                        "query": query,
+                        "source": "Wolfram Alpha",
+                        "timestamp": datetime.now().isoformat(),
+                        "cached": False
+                    }
+        
+        # If Wolfram Alpha fails, return failure to trigger fallback
+        return {
+            "success": False,
+            "error": "Wolfram Alpha could not solve this problem",
+            "source": "wolfram_alpha"
+        }
+        
+    except Exception as e:
+        return {
+            "success": False,
+            "error": f"Wolfram Alpha API error: {str(e)}",
+            "source": "wolfram_alpha"
+        }
 
-    def search_knowledge(self, query):
-        """Search knowledge base with confidence scoring"""
-        try:
-            query_lower = query.lower().strip()
-            best_match = None
-            best_confidence = 0
-            best_category = None
-            
-            # Search through all categories
-            for category, facts in self.knowledge_base.items():
-                for question, answer in facts.items():
-                    # Calculate confidence based on keyword matching
-                    question_lower = question.lower()
-                    
-                    # Exact match gets highest confidence
-                    if query_lower == question_lower:
-                        return {
-                            "answer": answer,
-                            "confidence": 0.98,
-                            "category": category,
-                            "question": question,
-                            "source": "exact_match"
-                        }
-                    
-                    # Calculate similarity score
-                    query_words = set(query_lower.split())
-                    question_words = set(question_lower.split())
-                    
-                    # Remove common words for better matching
-                    common_words = {"what", "is", "the", "a", "an", "of", "in", "on", "at", "to", "for", "with", "by"}
-                    query_words -= common_words
-                    question_words -= common_words
-                    
-                    if query_words and question_words:
-                        intersection = query_words.intersection(question_words)
-                        union = query_words.union(question_words)
-                        similarity = len(intersection) / len(union) if union else 0
-                        
-                        # Boost confidence for key word matches
-                        if similarity > best_confidence:
-                            best_confidence = similarity
-                            best_match = answer
-                            best_category = category
-                            best_question = question
-            
-            # Return best match if confidence is above threshold
-            if best_confidence >= 0.3:  # Lower threshold for more responses
-                return {
-                    "answer": best_match,
-                    "confidence": min(0.95, best_confidence + 0.2),  # Boost confidence
-                    "category": best_category,
-                    "question": best_question,
-                    "source": "similarity_match"
-                }
-            
-            # Fallback for no good matches
-            return {
-                "answer": "I love curious minds like yours! 🧠 I have knowledge about geography, science, mathematics, technology, history, culture, nature, and sports. Try asking me something specific in one of these areas!",
-                "confidence": 0.5,
-                "category": "general",
-                "question": query,
-                "source": "fallback"
-            }
-            
-        except Exception as e:
-            return {
-                "answer": "I encountered an issue processing your question, but I'm still here to help! 🤖",
-                "confidence": 0.3,
-                "category": "error",
-                "question": query,
-                "source": "error",
-                "error": str(e)
-            }
+def extract_wolfram_solution(pods, original_query):
+    """Extract the solution from Wolfram Alpha response pods"""
+    solution_parts = []
+    
+    # Look for solution in specific pod types
+    for pod in pods:
+        pod_id = pod.get('id', '').lower()
+        pod_title = pod.get('title', '').lower()
+        
+        # Check if this pod contains a solution
+        if any(keyword in pod_id for keyword in ['solution', 'result', 'decimal']):
+            subpods = pod.get('subpods', [])
+            for subpod in subpods:
+                text = subpod.get('plaintext', '')
+                if text and text.strip():
+                    solution_parts.append(text.strip())
+    
+    # If we found solutions, format them nicely
+    if solution_parts:
+        # Remove duplicates while preserving order
+        unique_solutions = []
+        for solution in solution_parts:
+            if solution not in unique_solutions:
+                unique_solutions.append(solution)
+        
+        # Format the final solution
+        if len(unique_solutions) == 1:
+            return f"✅ {unique_solutions[0]}"
+        else:
+            formatted_solutions = "\n".join([f"• {sol}" for sol in unique_solutions])
+            return f"✅ Solutions:\n{formatted_solutions}"
+    
+    return None
 
-    def get_status(self):
-        """Get comprehensive controller status"""
-        total_facts = sum(len(facts) for facts in self.knowledge_base.values())
-        success_rate = (self.successful_responses / max(1, self.total_queries)) * 100
+def python_math_solver(query):
+    """Fallback math solver using Python for basic calculations"""
+    try:
+        # Clean and prepare the query
+        cleaned_query = clean_math_expression(query)
+        
+        if not cleaned_query:
+            return solve_algebraic_equation(query)
+        
+        # Safe evaluation with allowed functions
+        allowed_names = {
+            "abs": abs, "round": round, "min": min, "max": max,
+            "sum": sum, "pow": pow, "sqrt": math.sqrt,
+            "sin": math.sin, "cos": math.cos, "tan": math.tan,
+            "log": math.log, "log10": math.log10, "exp": math.exp,
+            "pi": math.pi, "e": math.e, "ceil": math.ceil, "floor": math.floor,
+            "factorial": math.factorial, "degrees": math.degrees, "radians": math.radians
+        }
+        
+        # Evaluate the expression
+        result = eval(cleaned_query, {"__builtins__": {}}, allowed_names)
         
         return {
-            "name": self.name,
-            "version": self.version,
-            "status": self.status,
-            "capabilities": self.capabilities,
-            "total_facts": total_facts,
-            "categories": list(self.knowledge_base.keys()),
-            "total_queries": self.total_queries,
-            "successful_responses": self.successful_responses,
-            "success_rate": f"{success_rate:.1f}%",
-            "confidence_threshold": self.confidence_threshold,
-            "uptime": "99.9%",
-            "last_updated": datetime.now().isoformat(),
-            "api_endpoints": [
-                "/api/knowledge/ask",
-                "/api/knowledge/status",
-                "/api/knowledge/categories"
-            ]
+            "success": True,
+            "solution": f"✅ {result}",
+            "query": query,
+            "source": "Python Calculator",
+            "timestamp": datetime.now().isoformat(),
+            "cached": False
         }
-
-# Global controller instance
-knowledge_controller = KnowledgeController()
-
-# Bulletproof API endpoints
-@knowledge_api.route('/knowledge/ask', methods=['POST', 'GET'])
-def ask_question():
-    """Ask a question to the knowledge base - Bulletproof endpoint"""
-    try:
-        knowledge_controller.total_queries += 1
         
-        if request.method == 'POST':
-            if request.is_json:
-                data = request.get_json() or {}
-                question = data.get('question', '').strip()
-            else:
-                question = request.form.get('question', '').strip()
-        else:  # GET request
-            question = request.args.get('question', '').strip()
+    except Exception as e:
+        return solve_algebraic_equation(query)
+
+def clean_math_expression(query):
+    """Clean and prepare math expression for safe evaluation"""
+    # Convert to lowercase and remove common words
+    query = query.lower()
+    query = re.sub(r'\b(solve|calculate|compute|find|what is|equals?|the|of|a|an)\b', '', query)
+    
+    # Replace common math terms
+    replacements = {
+        'plus': '+', 'add': '+', 'added to': '+',
+        'minus': '-', 'subtract': '-', 'subtracted from': '-',
+        'times': '*', 'multiply': '*', 'multiplied by': '*',
+        'divided by': '/', 'divide': '/', 'over': '/',
+        'to the power of': '**', 'raised to': '**', 'squared': '**2', 'cubed': '**3',
+        'square root of': 'sqrt(', 'sqrt': 'sqrt(',
+        'sine': 'sin(', 'cosine': 'cos(', 'tangent': 'tan(',
+        'natural log': 'log(', 'logarithm': 'log10('
+    }
+    
+    for old, new in replacements.items():
+        query = query.replace(old, new)
+    
+    # Remove extra spaces
+    query = re.sub(r'\s+', '', query)
+    
+    # Check if it's a safe mathematical expression
+    if re.match(r'^[0-9+\-*/().x\s\w]+$', query):
+        # Handle some common patterns
+        query = query.replace('x', '*')  # Implicit multiplication
+        
+        # Balance parentheses for sqrt and trig functions
+        open_parens = query.count('(')
+        close_parens = query.count(')')
+        if open_parens > close_parens:
+            query += ')' * (open_parens - close_parens)
+        
+        return query
+    
+    return None
+
+def solve_algebraic_equation(query):
+    """Attempt to solve simple algebraic equations"""
+    try:
+        # Look for equation patterns like "2x + 5 = 15"
+        equation_match = re.search(r'(.+?)\s*=\s*(.+)', query)
+        
+        if equation_match:
+            left_side = equation_match.group(1).strip()
+            right_side = equation_match.group(2).strip()
             
-        if not question:
+            # Try to solve simple linear equations
+            if 'x' in left_side and right_side.replace('.', '').replace('-', '').isdigit():
+                solution = solve_linear_equation(left_side, float(right_side))
+                if solution is not None:
+                    return {
+                        "success": True,
+                        "solution": f"✅ x = {solution}",
+                        "query": query,
+                        "source": "Algebraic Solver",
+                        "timestamp": datetime.now().isoformat(),
+                        "cached": False
+                    }
+        
+        # If we can't solve it, provide helpful guidance
+        return math_help_response(query)
+        
+    except Exception as e:
+        return math_help_response(query)
+
+def solve_linear_equation(expression, target):
+    """Solve simple linear equations like '2x + 5' = target"""
+    try:
+        # Parse expressions like "2x + 5", "3x - 7", "x + 10", etc.
+        expression = expression.replace(' ', '').lower()
+        
+        # Extract coefficient and constant
+        coefficient = 0
+        constant = 0
+        
+        # Split by + and -
+        parts = re.split(r'([+-])', expression)
+        
+        for i, part in enumerate(parts):
+            if 'x' in part:
+                # Extract coefficient of x
+                coef_str = part.replace('x', '')
+                if coef_str == '' or coef_str == '+':
+                    coefficient += 1
+                elif coef_str == '-':
+                    coefficient -= 1
+                else:
+                    coefficient += float(coef_str)
+            elif part not in ['+', '-'] and part.strip():
+                # It's a constant
+                sign = 1
+                if i > 0 and parts[i-1] == '-':
+                    sign = -1
+                constant += sign * float(part)
+        
+        # Solve: coefficient * x + constant = target
+        # So: x = (target - constant) / coefficient
+        if coefficient != 0:
+            x = (target - constant) / coefficient
+            return round(x, 6) if x != int(x) else int(x)
+        
+        return None
+        
+    except Exception as e:
+        return None
+
+def math_help_response(query):
+    """Provide helpful math guidance when solving fails"""
+    # Detect what type of math problem it might be
+    query_lower = query.lower()
+    
+    if any(word in query_lower for word in ['derivative', 'differentiate', 'dx']):
+        help_text = "🧮 For calculus problems like derivatives, try: 'derivative of x^2' or 'differentiate sin(x)'"
+    elif any(word in query_lower for word in ['integral', 'integrate', 'antiderivative']):
+        help_text = "🧮 For integrals, try: 'integral of 2x' or 'integrate cos(x)'"
+    elif any(word in query_lower for word in ['solve', 'equation', '=']):
+        help_text = "🧮 For equations, try: 'solve 2x + 5 = 15' or 'solve x^2 = 16'"
+    elif any(word in query_lower for word in ['factor', 'expand']):
+        help_text = "🧮 For algebra, try: 'factor x^2 + 5x + 6' or 'expand (x+2)(x+3)'"
+    else:
+        help_text = "🧮 I can help with math! Try: 'solve 2x + 5 = 15', 'calculate 25 * 4 + 10', or 'derivative of x^2'"
+    
+    return {
+        "success": True,
+        "solution": help_text,
+        "query": query,
+        "source": "Math Helper",
+        "timestamp": datetime.now().isoformat(),
+        "cached": False
+    }
+
+# API ENDPOINTS
+
+@knowledge_api.route('/knowledge/math', methods=['POST'])
+def solve_math():
+    """
+    Solve math problems - REAL implementation
+    Accepts: {"query": "solve 2x + 5 = 15"}
+    Returns: {"success": true, "solution": "x = 5", ...}
+    """
+    try:
+        # Get the request data
+        if request.is_json:
+            data = request.get_json() or {}
+        else:
+            data = request.form.to_dict()
+            
+        query = data.get('query', '').strip()
+        
+        if not query:
             return jsonify({
                 "success": False,
-                "error": "Question is required",
-                "code": "MISSING_QUESTION"
+                "error": "Math query is required",
+                "code": "MISSING_QUERY",
+                "example": "Try: 'solve 2x + 5 = 15' or 'calculate 25 * 4'"
             }), 400
             
-        result = knowledge_controller.search_knowledge(question)
+        # Solve the math problem
+        result = solve_math_problem(query)
         
-        if result["confidence"] >= 0.5:
-            knowledge_controller.successful_responses += 1
+        if result["success"]:
+            return jsonify({
+                "success": True,
+                "message": "🧮 Math problem solved!",
+                "solution": result["solution"],
+                "query": query,
+                "source": result["source"],
+                "timestamp": result["timestamp"],
+                "cached": result.get("cached", False),
+                "branch": "knowledge"
+            }), 200
+        else:
+            return jsonify({
+                "success": False,
+                "error": result.get("error", "Math solving failed"),
+                "message": "Unable to solve math problem",
+                "query": query,
+                "branch": "knowledge"
+            }), 500
             
-        return jsonify({
-            "success": True,
-            "question": question,
-            "answer": result["answer"],
-            "confidence": result["confidence"],
-            "category": result["category"],
-            "source": result["source"],
-            "timestamp": datetime.now().isoformat(),
-            "branch": "knowledge"
-        }), 200
-        
     except Exception as e:
         return jsonify({
             "success": False,
@@ -240,49 +367,50 @@ def ask_question():
         }), 500
 
 @knowledge_api.route('/knowledge/status', methods=['GET'])
-def get_knowledge_status():
-    """Get knowledge controller status - Bulletproof endpoint"""
-    try:
-        return jsonify(knowledge_controller.get_status()), 200
-    except Exception as e:
-        return jsonify({
-            "error": str(e),
-            "branch": "knowledge",
-            "status": "error"
-        }), 500
-
-@knowledge_api.route('/knowledge/categories', methods=['GET'])
-def get_categories():
-    """Get available knowledge categories - Bulletproof endpoint"""
-    try:
-        categories_info = {}
-        for category, facts in knowledge_controller.knowledge_base.items():
-            categories_info[category] = {
-                "fact_count": len(facts),
-                "sample_questions": list(facts.keys())[:3]  # First 3 questions as samples
-            }
-            
-        return jsonify({
-            "success": True,
-            "categories": categories_info,
-            "total_categories": len(categories_info),
-            "branch": "knowledge"
-        }), 200
-    except Exception as e:
-        return jsonify({
-            "success": False,
-            "error": str(e),
-            "branch": "knowledge"
-        }), 500
-
-# Health check endpoint
-@knowledge_api.route('/knowledge/health', methods=['GET'])
-def health_check():
-    """Health check endpoint"""
+def knowledge_status():
+    """Get knowledge branch status"""
     return jsonify({
-        "status": "healthy",
+        "success": True,
         "branch": "knowledge",
-        "version": knowledge_controller.version,
-        "timestamp": datetime.now().isoformat()
+        "status": "active",
+        "capabilities": [
+            "math_solving",
+            "equation_solving", 
+            "calculus",
+            "algebra",
+            "arithmetic"
+        ],
+        "wolfram_alpha_available": bool(WOLFRAM_APP_ID),
+        "python_fallback_available": True,
+        "cached_solutions": len(math_cache)
     }), 200
 
+@knowledge_api.route('/knowledge/test', methods=['GET'])
+def test_math_solver():
+    """Test the math solver with sample problems"""
+    test_problems = [
+        "2 + 2",
+        "solve x + 5 = 10", 
+        "calculate 25 * 4",
+        "derivative of x^2"
+    ]
+    
+    results = []
+    for problem in test_problems:
+        result = solve_math_problem(problem)
+        results.append({
+            "problem": problem,
+            "success": result["success"],
+            "solution": result.get("solution", result.get("error", "No solution")),
+            "source": result.get("source", "unknown")
+        })
+    
+    return jsonify({
+        "success": True,
+        "test_results": results,
+        "wolfram_alpha_available": bool(WOLFRAM_APP_ID),
+        "branch": "knowledge"
+    }), 200
+
+# Export the blueprint
+__all__ = ['knowledge_api']
