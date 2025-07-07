@@ -1,10 +1,3 @@
-import os, requests, traceback
-from xml.etree import ElementTree as ET
-from branches.self_learning.log import log_entry
-from flask import jsonify, request
-
-WOLFRAM_APP_ID = os.getenv("WOLFRAM_APP_ID")
-
 def solve_math_query(raw_input):
     original = raw_input.strip()
     cleaned = original.lower().replace("^", "**").replace(" ", "")
@@ -17,38 +10,47 @@ def solve_math_query(raw_input):
             params={
                 "input": cleaned,
                 "appid": WOLFRAM_APP_ID,
-                "format": "plaintext"
+                "format": "plaintext",
+                "output": "XML"
             }
         )
         print(f"[WOLFRAM URL] {res.url}")
-        print("[WOLFRAM XML RAW]", res.text)
+        print("[WOLFRAM XML RAW]", res.text[:500])  # Truncate for logs
 
         root = ET.fromstring(res.content)
-        for pod in root.findall(".//pod"):
-            title = pod.attrib.get("title", "").lower()
-            if any(k in title for k in ["solution", "result", "answer", "root", "exact result"]):
-                node = pod.find(".//plaintext")
-                if node is not None and node.text:
-                    result = node.text.strip()
+        pods = root.findall(".//pod")
 
-                    # Log result to memory
+        fallback_text = None
+
+        for pod in pods:
+            title = pod.attrib.get("title", "").lower()
+            node = pod.find(".//plaintext")
+            if node is not None and node.text:
+                text = node.text.strip()
+                if any(k in title for k in ["solution", "result", "answer", "root", "exact result"]):
+                    result = text
+
+                    # Log and return the result
                     payload = {
                         "input": original,
                         "output": result,
                         "tags": ["math", "wolfram"],
                         "success": True,
-                        "meta": {
-                            "cleaned_input": cleaned,
-                            "source": "math_solver"
-                        }
+                        "meta": {"cleaned_input": cleaned, "source": "math_solver"}
                     }
                     with request.app.test_request_context(json=payload):
                         log_entry(request)
 
                     return {"success": True, "result": result}
+                # If no match yet, save the first valid pod as fallback
+                if fallback_text is None:
+                    fallback_text = text
 
-        return {"success": False, "error": "No readable answer from Wolfram Alpha."}
+        if fallback_text:
+            return {"success": True, "result": fallback_text}
+
+        return {"success": False, "error": "❌ No readable answer returned from Wolfram Alpha."}
 
     except Exception as e:
         print("[MATH ERROR]", traceback.format_exc())
-        return {"success": False, "error": str(e) or "Unexpected backend error"}
+        return {"success": False, "error": f"Wolfram failed: {str(e)}"}
