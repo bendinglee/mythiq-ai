@@ -1,15 +1,13 @@
 from flask import Flask, request, jsonify
 import os
-import wolframalpha
+import requests
 import traceback
+from xml.etree import ElementTree as ET
 
 app = Flask(__name__)
 
-# 🔐 Wolfram Alpha API key from environment
 WOLFRAM_APP_ID = os.getenv("WOLFRAM_APP_ID")
-client = wolframalpha.Client(WOLFRAM_APP_ID)
 
-# ✅ Healthcheck route
 @app.route("/api/status", methods=["GET"])
 def status():
     return jsonify({
@@ -17,49 +15,45 @@ def status():
         "message": "Mythiq backend is operational 🧠"
     }), 200
 
-# 🧮 Math solver with full traceback logging
 @app.route("/api/solve-math", methods=["POST"])
 def solve_math():
     data = request.get_json()
     question = data.get("question", "").strip()
 
+    # Normalize for solving variable
     if "solve" in question.lower() and "=" in question.lower() and "for" not in question.lower():
         question += " for x"
 
     try:
-        res = client.query(question)
-        pod_data = []
+        url = "https://api.wolframalpha.com/v2/query"
+        params = {
+            "input": question,
+            "appid": WOLFRAM_APP_ID,
+            "format": "plaintext"
+        }
+        response = requests.get(url, params=params)
+        print(f"[WOLFRAM RAW URL] {response.url}")
 
-        print(f"[WOLFRAM QUERY] {question}")
+        root = ET.fromstring(response.content)
 
-        for pod in res.pods:
-            title = pod.title.lower()
-            texts = list(pod.texts)
-            pod_data.append((title, texts))
-            print(f"[POD] {title} | TEXTS: {texts}")
+        for pod in root.findall(".//pod"):
+            title = pod.attrib.get("title", "").lower()
+            print(f"[POD] {title}")
+            if any(key in title for key in ["result", "solution", "exact result", "answer", "root"]):
+                plaintext = pod.find(".//plaintext")
+                if plaintext is not None and plaintext.text:
+                    return jsonify({"success": True, "result": plaintext.text.strip()})
 
-        if hasattr(res, "results") and res.results:
-            text = next(res.results).text
-            if text.strip():
-                return jsonify({"success": True, "result": text.strip()})
-
-        for title, texts in pod_data:
-            if any(key in title for key in ["result", "solution", "solutions", "exact result", "root", "roots", "answer"]):
-                for t in texts:
-                    if t.strip():
-                        return jsonify({"success": True, "result": t.strip()})
-
-        return jsonify({"success": False, "error": "No valid result returned from Wolfram Alpha."})
+        return jsonify({"success": False, "error": "No solution found in Wolfram Alpha response."})
 
     except Exception as e:
-        print(f"[WOLFRAM EXCEPTION] {repr(e)}")
+        print(f"[RAW WOLFRAM EXCEPTION] {repr(e)}")
         print("[TRACEBACK] " + traceback.format_exc())
         return jsonify({
             "success": False,
-            "error": str(e) if str(e).strip() else "Unknown backend failure. Check logs for full traceback."
+            "error": str(e) if str(e).strip() else "Unknown backend failure. Check logs for traceback."
         })
 
-# 🌐 Frontend UI
 @app.route("/")
 def index():
     return '''
