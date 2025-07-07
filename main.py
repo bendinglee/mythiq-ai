@@ -2,15 +2,15 @@ from flask import Flask, request, jsonify
 import os
 import traceback
 from dotenv import load_dotenv
-from xml.etree import ElementTree as ET
 
-# 🔐 Load environment variables (e.g. WOLFRAM_APP_ID)
+# 🔐 Load environment variables
 load_dotenv()
 WOLFRAM_APP_ID = os.getenv("WOLFRAM_APP_ID")
+HF_TOKEN = os.getenv("HF_TOKEN")
 
 app = Flask(__name__)
 
-# ✅ Import core modules (safe to fail early if needed)
+# ✅ Import critical AI branches
 try:
     from branches.self_learning.log import log_entry
     from branches.self_learning.recall import retrieve_entries
@@ -24,18 +24,22 @@ try:
 except Exception as e:
     print("🔥 Core import error:", traceback.format_exc())
 
-# ✅ Reflection Trainer (optional — fallback if unavailable)
+# ✅ Optional modules (resilient fallback)
 try:
     from branches.self_learning.reflection_trainer.trainer_route import reflect_logs_route
 except Exception as e:
-    print("🧠 Reflection module not available:", e)
+    print("🧠 Reflection module unavailable:", e)
     def reflect_logs_route():
-        return jsonify({
-            "success": False,
-            "message": "Reflection module is not available (missing sentence-transformers?)."
-        })
+        return jsonify({"success": False, "message": "Reflection disabled. Install sentence-transformers."})
 
-# ✅ API Routes
+try:
+    from branches.image_generator.routes import generate_image_route
+except Exception as e:
+    print("🎨 Image generation module unavailable:", e)
+    def generate_image_route():
+        return jsonify({"success": False, "message": "Image gen offline. Check HuggingFace or token."})
+
+# ✅ API Endpoints
 
 @app.route("/api/status", methods=["GET"])
 def status():
@@ -86,7 +90,11 @@ def classify():
 def dispatch():
     return dispatch_input(request)
 
-# ✅ Minimal Web UI for testing
+@app.route("/api/generate-image", methods=["POST"])
+def generate_image():
+    return generate_image_route()
+
+# ✅ Minimal Chat UI
 @app.route("/")
 def index():
     return '''
@@ -106,7 +114,7 @@ def index():
       <div id="chat">
         <h2>🤖 Welcome to Mythiq AI</h2>
         <div id="messages"></div>
-        <input type="text" id="userInput" placeholder="Ask me anything..." style="width: 75%;" />
+        <input type="text" id="userInput" placeholder="Try: generate me a cyberpunk cat" style="width: 75%;" />
         <button onclick="handleUserMessage()">Send</button>
       </div>
       <script>
@@ -123,7 +131,7 @@ def index():
             body: JSON.stringify({ input: text })
           });
           const data = await res.json();
-          display("bot", data.reply || "🤖 I couldn't find an answer.");
+          display("bot", data.reply || data.image_url || "🤖 I couldn't generate a response.");
         }
 
         function display(role, text) {
