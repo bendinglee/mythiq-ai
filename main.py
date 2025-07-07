@@ -4,14 +4,15 @@ import requests
 import traceback
 from xml.etree import ElementTree as ET
 
-# 🧠 Import memory handlers
+# 🧠 Import memory modules
 from branches.self_learning.log import log_entry
 from branches.self_learning.recall import retrieve_entries
+from branches.self_learning.reflect import reflect_summary
 
 app = Flask(__name__)
-
 WOLFRAM_APP_ID = os.getenv("WOLFRAM_APP_ID")
 
+# ✅ Healthcheck
 @app.route("/api/status", methods=["GET"])
 def status():
     return jsonify({
@@ -19,6 +20,7 @@ def status():
         "message": "Mythiq backend is operational 🧠"
     }), 200
 
+# 🧮 Math Solver via direct Wolfram API
 @app.route("/api/solve-math", methods=["POST"])
 def solve_math():
     data = request.get_json()
@@ -38,26 +40,24 @@ def solve_math():
         print(f"[WOLFRAM RAW URL] {response.url}")
 
         root = ET.fromstring(response.content)
-
         for pod in root.findall(".//pod"):
             title = pod.attrib.get("title", "").lower()
             print(f"[POD] {title}")
-            if any(key in title for key in ["result", "solution", "exact result", "answer", "root"]):
+            if any(k in title for k in ["result", "solution", "exact result", "answer", "root"]):
                 plaintext = pod.find(".//plaintext")
                 if plaintext is not None and plaintext.text:
                     result = plaintext.text.strip()
 
-                    # 🔁 Log the successful solve
+                    # 🔁 Log the result
                     try:
-                        from datetime import datetime
-                        log_entry_data = {
+                        log_payload = {
                             "input": question,
                             "output": result,
                             "tags": ["math", "wolfram"],
                             "success": True,
                             "meta": {"source": "solve-math"}
                         }
-                        with app.test_request_context(json=log_entry_data):
+                        with app.test_request_context(json=log_payload):
                             log_entry(request)
                     except Exception as log_err:
                         print(f"[MEMORY LOGGING ERROR] {log_err}")
@@ -74,17 +74,22 @@ def solve_math():
             "error": str(e) if str(e).strip() else "Unknown backend failure. Check logs for traceback."
         })
 
-# 💾 POST log memory
+# 💾 Log Memory
 @app.route("/api/log", methods=["POST"])
 def log():
     return log_entry(request)
 
-# 🔍 GET recall memory
+# 🔍 Recall Memory
 @app.route("/api/recall", methods=["GET"])
 def recall():
     return retrieve_entries(request)
 
-# 🌐 Frontend UI
+# 🧠 Reflect on Memory
+@app.route("/api/reflect", methods=["GET"])
+def reflect():
+    return reflect_summary(request)
+
+# 🌐 Inline Chat UI
 @app.route("/")
 def index():
     return '''
@@ -115,28 +120,24 @@ def index():
             }
 
             async function solveMathProblem(question) {
-                try {
-                    const res = await fetch("/api/solve-math", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ question })
-                    });
-                    const data = await res.json();
-                    return data.success
-                        ? `🧮 Solution: ${data.result}`
-                        : `❌ Error: ${data.error || "No readable output from Wolfram."}`;
-                } catch (err) {
-                    return "❌ Connection error: Could not reach backend.";
-                }
+                const res = await fetch("/api/solve-math", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ question })
+                });
+                const data = await res.json();
+                return data.success
+                    ? `🧮 Solution: ${data.result}`
+                    : `❌ Error: ${data.error || "No readable output from Wolfram."}`;
             }
 
             function displayMessage(role, text) {
-                const container = document.getElementById("messages");
+                const box = document.getElementById("messages");
                 const msg = document.createElement("div");
                 msg.className = "message " + (role === "user" ? "user" : "bot");
                 msg.textContent = (role === "user" ? "🧑 " : "🤖 ") + text;
-                container.appendChild(msg);
-                container.scrollTop = container.scrollHeight;
+                box.appendChild(msg);
+                box.scrollTop = box.scrollHeight;
             }
 
             async function handleUserMessage() {
@@ -151,7 +152,7 @@ def index():
                     const result = await solveMathProblem(message);
                     displayMessage("bot", result);
                 } else {
-                    displayMessage("bot", "📘 I currently solve math problems. Try: solve x^2 + 4x + 4 = 0");
+                    displayMessage("bot", "📘 I currently solve math problems only. Try: solve x^2 + 4x + 4 = 0");
                 }
             }
         </script>
