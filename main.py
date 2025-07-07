@@ -9,41 +9,33 @@ from branches.self_learning.log import log_entry
 from branches.self_learning.recall import retrieve_entries
 from branches.self_learning.reflect import reflect_summary
 from branches.general_knowledge.query import answer_general_knowledge
+from branches.intent_router.classifier import classify_intent
 
 app = Flask(__name__)
 WOLFRAM_APP_ID = os.getenv("WOLFRAM_APP_ID")
 
-# 🟢 Healthcheck
 @app.route("/api/status", methods=["GET"])
 def status():
     return jsonify({"status": "ok", "message": "Mythiq backend operational 🧠"}), 200
 
-# 🧮 Solve Math
 @app.route("/api/solve-math", methods=["POST"])
 def solve_math():
     data = request.get_json()
     question = data.get("question", "").strip()
-
     if "solve" in question.lower() and "=" in question and "for" not in question:
         question += " for x"
-
     try:
         res = requests.get(
             "https://api.wolframalpha.com/v2/query",
             params={"input": question, "appid": WOLFRAM_APP_ID, "format": "plaintext"}
         )
-
-        print(f"[WOLFRAM URL] {res.url}")
         root = ET.fromstring(res.content)
-
         for pod in root.findall(".//pod"):
             title = pod.attrib.get("title", "").lower()
-            print(f"[POD] {title}")
             if any(k in title for k in ["solution", "result", "answer", "root"]):
                 text = pod.find(".//plaintext")
                 if text is not None and text.text:
                     answer = text.text.strip()
-
                     # 🔁 Log result
                     log_payload = {
                         "input": question,
@@ -54,39 +46,32 @@ def solve_math():
                     }
                     with app.test_request_context(json=log_payload):
                         log_entry(request)
-
                     return jsonify({"success": True, "result": answer})
-
         return jsonify({"success": False, "error": "No readable answer from Wolfram Alpha."})
-
     except Exception as e:
         print("[MATH EXCEPTION]", traceback.format_exc())
-        return jsonify({
-            "success": False,
-            "error": str(e) or "Unexpected backend error occurred."
-        })
+        return jsonify({"success": False, "error": str(e) or "Unexpected backend error occurred."})
 
-# 💾 Log to Memory
 @app.route("/api/log", methods=["POST"])
 def log():
     return log_entry(request)
 
-# 🔍 Retrieve Memory
 @app.route("/api/recall", methods=["GET"])
 def recall():
     return retrieve_entries(request)
 
-# 🧠 Reflect on Memory
 @app.route("/api/reflect", methods=["GET"])
 def reflect():
     return reflect_summary(request)
 
-# 📚 Knowledge Base Query
 @app.route("/api/query-knowledge", methods=["GET"])
 def query_knowledge():
     return answer_general_knowledge(request)
 
-# 💬 Minimal Frontend
+@app.route("/api/classify-intent", methods=["GET"])
+def route_intent():
+    return classify_intent(request)
+
 @app.route("/")
 def index():
     return '''
@@ -95,7 +80,7 @@ def index():
     <head>
       <title>Mythiq AI</title>
       <style>
-        body { background-color: #0f0f0f; color: #fff; font-family: sans-serif; padding: 40px; }
+        body { background: #0f0f0f; color: #fff; font-family: sans-serif; padding: 40px; }
         #chat { max-width: 720px; margin: auto; padding: 20px; background: #1a1a1a; border-radius: 10px; }
         .message { margin: 10px 0; }
         .user { color: #7fffd4; font-weight: bold; }
@@ -109,11 +94,11 @@ def index():
         <input type="text" id="userInput" placeholder="Try: solve 2x + 5 = 15" style="width: 75%;" />
         <button onclick="handleUserMessage()">Send</button>
       </div>
-
       <script>
-        function isMathQuery(msg) {
-          const keys = ['solve', 'calculate', 'compute', 'find', '+', '-', '*', '/', '=', '^', 'x', 'y'];
-          return keys.some(k => msg.toLowerCase().includes(k));
+        async function classifyIntent(query) {
+          const res = await fetch("/api/classify-intent?q=" + encodeURIComponent(query));
+          const data = await res.json();
+          return data.intent || "chat";
         }
 
         async function solveMath(q) {
@@ -123,7 +108,7 @@ def index():
             body: JSON.stringify({ question: q })
           });
           const data = await res.json();
-          return data.success ? `🧮 Solution: ${data.result}` : `❌ ${data.error}`;
+          return data.success ? `🧮 ${data.result}` : `❌ ${data.error}`;
         }
 
         async function askKnowledge(q) {
@@ -148,7 +133,17 @@ def index():
           display("user", text);
           input.value = "";
 
-          let reply = isMathQuery(text) ? await solveMath(text) : await askKnowledge(text);
+          const intent = await classifyIntent(text);
+          let reply = "";
+
+          if (intent === "math") {
+            reply = await solveMath(text);
+          } else if (intent === "knowledge") {
+            reply = await askKnowledge(text);
+          } else {
+            reply = "📘 I'm learning more every day. Try: solve x^2 + 4x + 4 = 0 or ask what is photosynthesis.";
+          }
+
           display("bot", reply);
         }
       </script>
