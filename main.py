@@ -4,36 +4,49 @@ import wolframalpha
 
 app = Flask(__name__)
 
-# Load Wolfram Alpha App ID from Railway environment variable
+# 🔐 Environment Variable (from Railway Dashboard)
 WOLFRAM_APP_ID = os.getenv("WOLFRAM_APP_ID")
 client = wolframalpha.Client(WOLFRAM_APP_ID)
 
-# ------------------------
-# ✅ API Routes
-# ------------------------
-
+# ✅ Healthcheck Route for Railway
 @app.route("/api/status", methods=["GET"])
 def status():
     return jsonify({
         "status": "ok",
-        "message": "Mythiq is alive and operational 🧠"
+        "message": "Mythiq is running smoothly 🧠"
     }), 200
 
+# 🧮 Math Solver Route with Fallback
 @app.route("/api/solve-math", methods=["POST"])
 def solve_math():
     data = request.get_json()
-    question = data.get("question", "")
+    question = data.get("question", "").strip()
+
+    # Normalize input for better Wolfram compatibility
+    if "solve" in question.lower() and "=" in question.lower() and "for" not in question.lower():
+        question += " for x"
+
     try:
         res = client.query(question)
-        answer = next(res.results).text
-        return jsonify({"success": True, "result": answer})
+
+        # First try structured result
+        if hasattr(res, "results") and res.results:
+            answer = next(res.results).text
+            return jsonify({"success": True, "result": answer})
+
+        # Fallback through common pod titles
+        for pod in res.pods:
+            if pod.title.lower() in ["result", "solution", "exact result"]:
+                text = next(pod.texts, None)
+                if text:
+                    return jsonify({"success": True, "result": text})
+
+        return jsonify({"success": False, "error": "No solution returned from Wolfram Alpha."})
+
     except Exception as e:
         return jsonify({"success": False, "error": str(e)})
 
-# ------------------------
-# 🧠 Frontend
-# ------------------------
-
+# 🖥️ Inline HTML/JS Chat Frontend
 @app.route("/")
 def index():
     return '''
@@ -42,43 +55,25 @@ def index():
     <head>
         <title>Mythiq AI</title>
         <style>
-            body {
-                background-color: #0f0f0f;
-                font-family: 'Segoe UI', sans-serif;
-                color: #ffffff;
-                padding: 40px;
-            }
-            #chat {
-                max-width: 720px;
-                margin: auto;
-                background: #1f1f1f;
-                padding: 20px;
-                border-radius: 10px;
-            }
-            .message {
-                margin: 10px 0;
-            }
-            .user {
-                color: #72e0ae;
-                font-weight: bold;
-            }
-            .bot {
-                color: #6ab0ff;
-            }
+            body { background-color: #0f0f0f; font-family: 'Segoe UI', sans-serif; color: #ffffff; padding: 40px; }
+            #chat { max-width: 750px; margin: auto; background: #1e1e1e; padding: 20px; border-radius: 10px; }
+            .message { margin: 10px 0; }
+            .user { color: #72e0ae; font-weight: bold; }
+            .bot { color: #6ab0ff; }
         </style>
     </head>
     <body>
         <div id="chat">
             <h2>🤖 Welcome to Mythiq AI</h2>
             <div id="messages"></div>
-            <input type="text" id="userInput" placeholder="Type a math question like 'solve x^2 + 5x + 6 = 0'" style="width: 80%;" />
+            <input type="text" id="userInput" placeholder="Try 'solve 2x + 5 = 15'" style="width: 75%;" />
             <button onclick="handleUserMessage()">Send</button>
         </div>
 
         <script>
             function isMathQuery(message) {
-                const mathKeywords = ['solve', 'calculate', 'compute', 'find', 'equation', 'integral', 'derivative', '+', '-', '*', '/', '=', 'x', 'y', '^'];
-                return mathKeywords.some(keyword => message.toLowerCase().includes(keyword));
+                const keywords = ['solve', 'calculate', 'compute', 'find', 'integrate', 'derivative', 'equation', 'factor', 'simplify', '+', '-', '*', '/', '=', '^', 'x', 'y'];
+                return keywords.some(kw => message.toLowerCase().includes(kw));
             }
 
             async function solveMathProblem(question) {
@@ -89,23 +84,18 @@ def index():
                         body: JSON.stringify({ question: question })
                     });
                     const data = await res.json();
-                    return data.success ? `🧮 Solution: ${data.result}` : `❌ Error: ${data.error}`;
+                    return data.success
+                        ? `🧮 Solution: ${data.result}`
+                        : `❌ Error: ${data.error}`;
                 } catch (err) {
-                    return "❌ Connection error: Could not reach solver.";
+                    return "❌ Connection error: Could not reach math backend.";
                 }
             }
 
-            function displayUser(text) {
+            function displayMessage(role, text) {
                 const msg = document.createElement("div");
-                msg.className = "message user";
-                msg.textContent = "🧑 " + text;
-                document.getElementById("messages").appendChild(msg);
-            }
-
-            function displayBot(text) {
-                const msg = document.createElement("div");
-                msg.className = "message bot";
-                msg.textContent = "🤖 " + text;
+                msg.className = "message " + (role === "user" ? "user" : "bot");
+                msg.textContent = (role === "user" ? "🧑 " : "🤖 ") + text;
                 document.getElementById("messages").appendChild(msg);
                 document.getElementById("messages").scrollTop = document.getElementById("messages").scrollHeight;
             }
@@ -115,15 +105,15 @@ def index():
                 const message = input.value.trim();
                 if (!message) return;
 
-                displayUser(message);
+                displayMessage("user", message);
                 input.value = "";
 
                 if (isMathQuery(message)) {
-                    displayBot("🧮 Solving...");
+                    displayMessage("bot", "🧮 Solving...");
                     const solution = await solveMathProblem(message);
-                    displayBot(solution);
+                    displayMessage("bot", solution);
                 } else {
-                    displayBot("🔧 I currently only solve math questions. Try: 'solve x^2 + 5x + 6 = 0'");
+                    displayMessage("bot", "🔍 I currently handle math problems. Try something like: 'solve x^2 + 4x + 4 = 0'");
                 }
             }
         </script>
