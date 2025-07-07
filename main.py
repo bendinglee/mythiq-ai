@@ -4,25 +4,27 @@ import traceback
 from dotenv import load_dotenv
 from xml.etree import ElementTree as ET
 
-# 🔐 Load .env vars
+# 🔐 Load environment variables
 load_dotenv()
 WOLFRAM_APP_ID = os.getenv("WOLFRAM_APP_ID")
 
 app = Flask(__name__)
 
-# ✅ Safe Modular Importing (Pro Debug Trap)
+# ✅ Import all branches with debug fallback
 try:
     from branches.self_learning.log import log_entry
     from branches.self_learning.recall import retrieve_entries
     from branches.self_learning.reflect import reflect_summary
+    from branches.self_learning.reflection_trainer.trainer_route import reflect_logs_route
+
     from branches.general_knowledge.query import answer_general_knowledge
     from branches.intent_router.classifier import classify_intent
     from branches.math_solver.solver import solve_math_query
     from branches.semantic_search.query_router import query_fuzzy_route
-    from branches.core_router.dispatcher import dispatch_input
     from branches.doc_ingestor.routes import load_docs_route
+    from branches.core_router.dispatcher import dispatch_input
 except Exception as e:
-    print("🚨 Import error:", traceback.format_exc())
+    print("🔥 Import error:", traceback.format_exc())
 
 # ✅ Core Routes
 
@@ -35,8 +37,7 @@ def solve_math():
     try:
         data = request.get_json()
         question = data.get("question", "").strip()
-        result = solve_math_query(question)
-        return jsonify(result)
+        return jsonify(solve_math_query(question))
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
 
@@ -60,6 +61,10 @@ def recall():
 def reflect():
     return reflect_summary(request)
 
+@app.route("/api/reflect-logs", methods=["POST"])
+def reflect_logs():
+    return reflect_logs_route()
+
 @app.route("/api/log", methods=["POST"])
 def log():
     return log_entry(request)
@@ -72,7 +77,7 @@ def classify():
 def dispatch():
     return dispatch_input(request)
 
-# ✅ Optional: Web UI to interact
+# ✅ Minimal Web UI
 @app.route("/")
 def index():
     return '''
@@ -92,7 +97,7 @@ def index():
       <div id="chat">
         <h2>🤖 Welcome to Mythiq AI</h2>
         <div id="messages"></div>
-        <input type="text" id="userInput" placeholder="Try: define gravity" style="width: 75%;" />
+        <input type="text" id="userInput" placeholder="Try: who discovered gravity" style="width: 75%;" />
         <button onclick="handleUserMessage()">Send</button>
       </div>
       <script>
@@ -109,7 +114,7 @@ def index():
             body: JSON.stringify({ input: text })
           });
           const data = await res.json();
-          display("bot", data.reply || "🤖 I couldn't generate a reply.");
+          display("bot", data.reply || "🤖 I couldn't find an answer.");
         }
 
         function display(role, text) {
