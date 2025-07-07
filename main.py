@@ -10,6 +10,7 @@ from branches.self_learning.recall import retrieve_entries
 from branches.self_learning.reflect import reflect_summary
 from branches.general_knowledge.query import answer_general_knowledge
 from branches.intent_router.classifier import classify_intent
+from branches.math_solver.solver import solve_math_query
 
 app = Flask(__name__)
 WOLFRAM_APP_ID = os.getenv("WOLFRAM_APP_ID")
@@ -21,57 +22,9 @@ def status():
 @app.route("/api/solve-math", methods=["POST"])
 def solve_math():
     data = request.get_json()
-    original_question = data.get("question", "").strip()
-    question = original_question.lower().replace("^", "**").replace(" ", "")
-
-    if "=" in question and "for" not in question:
-        question += " for x"
-
-    try:
-        res = requests.get(
-            "https://api.wolframalpha.com/v2/query",
-            params={
-                "input": question,
-                "appid": WOLFRAM_APP_ID,
-                "format": "plaintext"
-            }
-        )
-        print(f"[WOLFRAM URL] {res.url}")
-        print("[WOLFRAM XML DUMP]")
-        print(res.text)
-
-        root = ET.fromstring(res.content)
-
-        for pod in root.findall(".//pod"):
-            title = pod.attrib.get("title", "").lower()
-            if any(k in title for k in ["solution", "result", "answer", "root", "exact result"]):
-                text = pod.find(".//plaintext")
-                if text is not None and text.text:
-                    answer = text.text.strip()
-
-                    log_payload = {
-                        "input": original_question,
-                        "output": answer,
-                        "tags": ["math", "wolfram"],
-                        "success": True,
-                        "meta": {
-                            "cleaned_input": question,
-                            "source": "solve-math"
-                        }
-                    }
-                    with app.test_request_context(json=log_payload):
-                        log_entry(request)
-
-                    return jsonify({"success": True, "result": answer})
-
-        return jsonify({"success": False, "error": "No readable answer from Wolfram Alpha."})
-
-    except Exception as e:
-        print("[MATH EXCEPTION]", traceback.format_exc())
-        return jsonify({
-            "success": False,
-            "error": str(e) or "Unexpected backend error occurred."
-        })
+    question = data.get("question", "").strip()
+    result = solve_math_query(question)
+    return jsonify(result)
 
 @app.route("/api/log", methods=["POST"])
 def log():
@@ -162,7 +115,7 @@ def index():
           } else if (intent === "knowledge") {
             reply = await askKnowledge(text);
           } else {
-            reply = "📘 I'm learning every day. Try: solve x^2 + 4x + 4 = 0 or ask what is gravity.";
+            reply = "📘 I’m growing smarter every day. Try math or general knowledge queries!";
           }
 
           display("bot", reply);
@@ -171,5 +124,6 @@ def index():
     </body>
     </html>
     '''
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
