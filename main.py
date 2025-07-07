@@ -1,13 +1,15 @@
 from flask import Flask, request, jsonify
 import os
 import wolframalpha
+import traceback
 
 app = Flask(__name__)
 
-# ✅ Wolfram Alpha client (without unsupported args)
+# 🔐 Wolfram Alpha API key from environment
 WOLFRAM_APP_ID = os.getenv("WOLFRAM_APP_ID")
 client = wolframalpha.Client(WOLFRAM_APP_ID)
 
+# ✅ Healthcheck route
 @app.route("/api/status", methods=["GET"])
 def status():
     return jsonify({
@@ -15,6 +17,7 @@ def status():
         "message": "Mythiq backend is operational 🧠"
     }), 200
 
+# 🧮 Math solver with full traceback logging
 @app.route("/api/solve-math", methods=["POST"])
 def solve_math():
     data = request.get_json()
@@ -28,6 +31,7 @@ def solve_math():
         pod_data = []
 
         print(f"[WOLFRAM QUERY] {question}")
+
         for pod in res.pods:
             title = pod.title.lower()
             texts = list(pod.texts)
@@ -49,8 +53,13 @@ def solve_math():
 
     except Exception as e:
         print(f"[WOLFRAM EXCEPTION] {repr(e)}")
-        return jsonify({"success": False, "error": str(e) or "Unknown error occurred."})
+        print("[TRACEBACK] " + traceback.format_exc())
+        return jsonify({
+            "success": False,
+            "error": str(e) if str(e).strip() else "Unknown backend failure. Check logs for full traceback."
+        })
 
+# 🌐 Frontend UI
 @app.route("/")
 def index():
     return '''
