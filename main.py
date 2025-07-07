@@ -4,19 +4,17 @@ import traceback
 from dotenv import load_dotenv
 from xml.etree import ElementTree as ET
 
-# 🔐 Load environment variables
+# 🔐 Load environment variables (e.g. WOLFRAM_APP_ID)
 load_dotenv()
 WOLFRAM_APP_ID = os.getenv("WOLFRAM_APP_ID")
 
 app = Flask(__name__)
 
-# ✅ Import all branches with debug fallback
+# ✅ Import core modules (safe to fail early if needed)
 try:
     from branches.self_learning.log import log_entry
     from branches.self_learning.recall import retrieve_entries
     from branches.self_learning.reflect import reflect_summary
-    from branches.self_learning.reflection_trainer.trainer_route import reflect_logs_route
-
     from branches.general_knowledge.query import answer_general_knowledge
     from branches.intent_router.classifier import classify_intent
     from branches.math_solver.solver import solve_math_query
@@ -24,9 +22,20 @@ try:
     from branches.doc_ingestor.routes import load_docs_route
     from branches.core_router.dispatcher import dispatch_input
 except Exception as e:
-    print("🔥 Import error:", traceback.format_exc())
+    print("🔥 Core import error:", traceback.format_exc())
 
-# ✅ Core Routes
+# ✅ Reflection Trainer (optional — fallback if unavailable)
+try:
+    from branches.self_learning.reflection_trainer.trainer_route import reflect_logs_route
+except Exception as e:
+    print("🧠 Reflection module not available:", e)
+    def reflect_logs_route():
+        return jsonify({
+            "success": False,
+            "message": "Reflection module is not available (missing sentence-transformers?)."
+        })
+
+# ✅ API Routes
 
 @app.route("/api/status", methods=["GET"])
 def status():
@@ -53,6 +62,10 @@ def query_fuzzy():
 def load_docs():
     return load_docs_route()
 
+@app.route("/api/reflect-logs", methods=["POST"])
+def reflect_logs():
+    return reflect_logs_route()
+
 @app.route("/api/recall", methods=["GET"])
 def recall():
     return retrieve_entries(request)
@@ -60,10 +73,6 @@ def recall():
 @app.route("/api/reflect", methods=["GET"])
 def reflect():
     return reflect_summary(request)
-
-@app.route("/api/reflect-logs", methods=["POST"])
-def reflect_logs():
-    return reflect_logs_route()
 
 @app.route("/api/log", methods=["POST"])
 def log():
@@ -77,7 +86,7 @@ def classify():
 def dispatch():
     return dispatch_input(request)
 
-# ✅ Minimal Web UI
+# ✅ Minimal Web UI for testing
 @app.route("/")
 def index():
     return '''
@@ -97,7 +106,7 @@ def index():
       <div id="chat">
         <h2>🤖 Welcome to Mythiq AI</h2>
         <div id="messages"></div>
-        <input type="text" id="userInput" placeholder="Try: who discovered gravity" style="width: 75%;" />
+        <input type="text" id="userInput" placeholder="Ask me anything..." style="width: 75%;" />
         <button onclick="handleUserMessage()">Send</button>
       </div>
       <script>
@@ -130,5 +139,6 @@ def index():
     </html>
     '''
 
+# ✅ Launch app
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
