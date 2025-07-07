@@ -4,14 +4,13 @@ import traceback
 from dotenv import load_dotenv
 from xml.etree import ElementTree as ET
 
-# 🔐 Load environment variables
+# 🔐 Load .env vars
 load_dotenv()
-
-# ✅ Core App Init
-app = Flask(__name__)
 WOLFRAM_APP_ID = os.getenv("WOLFRAM_APP_ID")
 
-# ✅ Robust Import Handling (Pro Debug Tip)
+app = Flask(__name__)
+
+# ✅ Safe Modular Importing (Pro Debug Trap)
 try:
     from branches.self_learning.log import log_entry
     from branches.self_learning.recall import retrieve_entries
@@ -21,8 +20,9 @@ try:
     from branches.math_solver.solver import solve_math_query
     from branches.semantic_search.query_router import query_fuzzy_route
     from branches.core_router.dispatcher import dispatch_input
+    from branches.doc_ingestor.routes import load_docs_route
 except Exception as e:
-    print("🔥 Module import error:", e)
+    print("🚨 Import error:", traceback.format_exc())
 
 # ✅ Core Routes
 
@@ -48,6 +48,10 @@ def query_knowledge():
 def query_fuzzy():
     return query_fuzzy_route()
 
+@app.route("/api/load-docs", methods=["POST"])
+def load_docs():
+    return load_docs_route()
+
 @app.route("/api/recall", methods=["GET"])
 def recall():
     return retrieve_entries(request)
@@ -68,7 +72,7 @@ def classify():
 def dispatch():
     return dispatch_input(request)
 
-# ✅ Lightweight Frontend for Testing
+# ✅ Optional: Web UI to interact
 @app.route("/")
 def index():
     return '''
@@ -88,7 +92,7 @@ def index():
       <div id="chat">
         <h2>🤖 Welcome to Mythiq AI</h2>
         <div id="messages"></div>
-        <input type="text" id="userInput" placeholder="Ask me anything..." style="width: 75%;" />
+        <input type="text" id="userInput" placeholder="Try: define gravity" style="width: 75%;" />
         <button onclick="handleUserMessage()">Send</button>
       </div>
       <script>
@@ -105,7 +109,7 @@ def index():
             body: JSON.stringify({ input: text })
           });
           const data = await res.json();
-          display("bot", data.reply || "🤖 No response available.");
+          display("bot", data.reply || "🤖 I couldn't generate a reply.");
         }
 
         function display(role, text) {
