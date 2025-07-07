@@ -4,6 +4,10 @@ import requests
 import traceback
 from xml.etree import ElementTree as ET
 
+# 🧠 Import memory handlers
+from branches.self_learning.log import log_entry
+from branches.self_learning.recall import retrieve_entries
+
 app = Flask(__name__)
 
 WOLFRAM_APP_ID = os.getenv("WOLFRAM_APP_ID")
@@ -20,7 +24,6 @@ def solve_math():
     data = request.get_json()
     question = data.get("question", "").strip()
 
-    # Normalize for solving variable
     if "solve" in question.lower() and "=" in question.lower() and "for" not in question.lower():
         question += " for x"
 
@@ -42,7 +45,24 @@ def solve_math():
             if any(key in title for key in ["result", "solution", "exact result", "answer", "root"]):
                 plaintext = pod.find(".//plaintext")
                 if plaintext is not None and plaintext.text:
-                    return jsonify({"success": True, "result": plaintext.text.strip()})
+                    result = plaintext.text.strip()
+
+                    # 🔁 Log the successful solve
+                    try:
+                        from datetime import datetime
+                        log_entry_data = {
+                            "input": question,
+                            "output": result,
+                            "tags": ["math", "wolfram"],
+                            "success": True,
+                            "meta": {"source": "solve-math"}
+                        }
+                        with app.test_request_context(json=log_entry_data):
+                            log_entry(request)
+                    except Exception as log_err:
+                        print(f"[MEMORY LOGGING ERROR] {log_err}")
+
+                    return jsonify({"success": True, "result": result})
 
         return jsonify({"success": False, "error": "No solution found in Wolfram Alpha response."})
 
@@ -54,6 +74,17 @@ def solve_math():
             "error": str(e) if str(e).strip() else "Unknown backend failure. Check logs for traceback."
         })
 
+# 💾 POST log memory
+@app.route("/api/log", methods=["POST"])
+def log():
+    return log_entry(request)
+
+# 🔍 GET recall memory
+@app.route("/api/recall", methods=["GET"])
+def recall():
+    return retrieve_entries(request)
+
+# 🌐 Frontend UI
 @app.route("/")
 def index():
     return '''
