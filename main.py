@@ -3,14 +3,14 @@ import os
 import traceback
 from dotenv import load_dotenv
 
-# 🔐 Load environment variables
+# 🔐 Load .env variables
 load_dotenv()
-WOLFRAM_APP_ID = os.getenv("WOLFRAM_APP_ID")
 HF_TOKEN = os.getenv("HF_TOKEN")
+WOLFRAM_APP_ID = os.getenv("WOLFRAM_APP_ID")
 
 app = Flask(__name__)
 
-# ✅ Import critical AI branches
+# ✅ Primary brain modules
 try:
     from branches.self_learning.log import log_entry
     from branches.self_learning.recall import retrieve_entries
@@ -24,7 +24,7 @@ try:
 except Exception as e:
     print("🔥 Core import error:", traceback.format_exc())
 
-# ✅ Optional modules (resilient fallback)
+# 🔁 Optional: Self-reflection engine
 try:
     from branches.self_learning.reflection_trainer.trainer_route import reflect_logs_route
 except Exception as e:
@@ -32,43 +32,37 @@ except Exception as e:
     def reflect_logs_route():
         return jsonify({"success": False, "message": "Reflection disabled. Install sentence-transformers."})
 
+# 🎨 Optional: Visual image generator
 try:
     from branches.image_generator.routes import generate_image_route
 except Exception as e:
     print("🎨 Image generation module unavailable:", e)
     def generate_image_route():
-        return jsonify({"success": False, "message": "Image gen offline. Check HuggingFace or token."})
+        return jsonify({"success": False, "message": "Image generation offline. Check HuggingFace setup."})
 
-# ✅ API Endpoints
+# ✅ API Routes
 
 @app.route("/api/status", methods=["GET"])
 def status():
-    return jsonify({"status": "ok", "message": "Mythiq backend is alive 🔥"}), 200
+    return jsonify({"status": "ok", "message": "Mythiq backend is running 🔥"}), 200
 
 @app.route("/api/solve-math", methods=["POST"])
 def solve_math():
-    try:
-        data = request.get_json()
-        question = data.get("question", "").strip()
-        return jsonify(solve_math_query(question))
-    except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 500
-
-@app.route("/api/query-knowledge", methods=["GET"])
-def query_knowledge():
-    return answer_general_knowledge(request)
+    data = request.get_json()
+    q = data.get("question", "").strip()
+    return jsonify(solve_math_query(q))
 
 @app.route("/api/query-fuzzy", methods=["GET"])
 def query_fuzzy():
     return query_fuzzy_route()
 
+@app.route("/api/query-knowledge", methods=["GET"])
+def query_knowledge():
+    return answer_general_knowledge(request)
+
 @app.route("/api/load-docs", methods=["POST"])
 def load_docs():
     return load_docs_route()
-
-@app.route("/api/reflect-logs", methods=["POST"])
-def reflect_logs():
-    return reflect_logs_route()
 
 @app.route("/api/recall", methods=["GET"])
 def recall():
@@ -82,6 +76,10 @@ def reflect():
 def log():
     return log_entry(request)
 
+@app.route("/api/reflect-logs", methods=["POST"])
+def reflect_logs():
+    return reflect_logs_route()
+
 @app.route("/api/classify-intent", methods=["GET"])
 def classify():
     return classify_intent(request)
@@ -94,7 +92,7 @@ def dispatch():
 def generate_image():
     return generate_image_route()
 
-# ✅ Minimal Chat UI
+# ✅ UI Web Chat
 @app.route("/")
 def index():
     return '''
@@ -104,17 +102,18 @@ def index():
       <title>Mythiq AI</title>
       <style>
         body { background: #0f0f0f; color: #fff; font-family: sans-serif; padding: 40px; }
-        #chat { max-width: 720px; margin: auto; padding: 20px; background: #1a1a1a; border-radius: 10px; }
+        #chat { max-width: 800px; margin: auto; padding: 20px; background: #1a1a1a; border-radius: 10px; }
         .message { margin: 10px 0; }
         .user { color: #7fffd4; font-weight: bold; }
         .bot { color: #87cefa; }
+        img { max-width: 100%; border-radius: 10px; margin-top: 8px; border: 2px solid #444; }
       </style>
     </head>
     <body>
       <div id="chat">
         <h2>🤖 Welcome to Mythiq AI</h2>
         <div id="messages"></div>
-        <input type="text" id="userInput" placeholder="Try: generate me a cyberpunk cat" style="width: 75%;" />
+        <input type="text" id="userInput" placeholder="Try: a robot monk under the moonlight" style="width: 75%;" />
         <button onclick="handleUserMessage()">Send</button>
       </div>
       <script>
@@ -131,7 +130,15 @@ def index():
             body: JSON.stringify({ input: text })
           });
           const data = await res.json();
-          display("bot", data.reply || data.image_url || "🤖 I couldn't generate a response.");
+
+          if (data.image_url) {
+            display("bot", "🎨 Here's your image:");
+            const img = document.createElement("img");
+            img.src = data.image_url;
+            document.getElementById("messages").appendChild(img);
+          } else {
+            display("bot", data.reply || data.result || "🤖 I couldn't find an answer.");
+          }
         }
 
         function display(role, text) {
@@ -147,6 +154,6 @@ def index():
     </html>
     '''
 
-# ✅ Launch app
+# ✅ Server launch
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
