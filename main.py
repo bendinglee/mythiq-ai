@@ -4,82 +4,74 @@ import requests
 import traceback
 from xml.etree import ElementTree as ET
 
-# 🧠 Import memory modules
+# 🧠 Mythiq Modules
 from branches.self_learning.log import log_entry
 from branches.self_learning.recall import retrieve_entries
 from branches.self_learning.reflect import reflect_summary
+from branches.general_knowledge.query import answer_general_knowledge
 
 app = Flask(__name__)
 WOLFRAM_APP_ID = os.getenv("WOLFRAM_APP_ID")
 
-# ✅ Healthcheck
+# 🟢 Healthcheck
 @app.route("/api/status", methods=["GET"])
 def status():
-    return jsonify({
-        "status": "ok",
-        "message": "Mythiq backend is operational 🧠"
-    }), 200
+    return jsonify({"status": "ok", "message": "Mythiq backend operational 🧠"}), 200
 
-# 🧮 Math Solver via direct Wolfram API
+# 🧮 Solve Math
 @app.route("/api/solve-math", methods=["POST"])
 def solve_math():
     data = request.get_json()
     question = data.get("question", "").strip()
 
-    if "solve" in question.lower() and "=" in question.lower() and "for" not in question.lower():
+    if "solve" in question.lower() and "=" in question and "for" not in question:
         question += " for x"
 
     try:
-        url = "https://api.wolframalpha.com/v2/query"
-        params = {
-            "input": question,
-            "appid": WOLFRAM_APP_ID,
-            "format": "plaintext"
-        }
-        response = requests.get(url, params=params)
-        print(f"[WOLFRAM RAW URL] {response.url}")
+        res = requests.get(
+            "https://api.wolframalpha.com/v2/query",
+            params={"input": question, "appid": WOLFRAM_APP_ID, "format": "plaintext"}
+        )
 
-        root = ET.fromstring(response.content)
+        print(f"[WOLFRAM URL] {res.url}")
+        root = ET.fromstring(res.content)
+
         for pod in root.findall(".//pod"):
             title = pod.attrib.get("title", "").lower()
             print(f"[POD] {title}")
-            if any(k in title for k in ["result", "solution", "exact result", "answer", "root"]):
-                plaintext = pod.find(".//plaintext")
-                if plaintext is not None and plaintext.text:
-                    result = plaintext.text.strip()
+            if any(k in title for k in ["solution", "result", "answer", "root"]):
+                text = pod.find(".//plaintext")
+                if text is not None and text.text:
+                    answer = text.text.strip()
 
-                    # 🔁 Log the result
-                    try:
-                        log_payload = {
-                            "input": question,
-                            "output": result,
-                            "tags": ["math", "wolfram"],
-                            "success": True,
-                            "meta": {"source": "solve-math"}
-                        }
-                        with app.test_request_context(json=log_payload):
-                            log_entry(request)
-                    except Exception as log_err:
-                        print(f"[MEMORY LOGGING ERROR] {log_err}")
+                    # 🔁 Log result
+                    log_payload = {
+                        "input": question,
+                        "output": answer,
+                        "tags": ["math", "wolfram"],
+                        "success": True,
+                        "meta": {"source": "solve-math"}
+                    }
+                    with app.test_request_context(json=log_payload):
+                        log_entry(request)
 
-                    return jsonify({"success": True, "result": result})
+                    return jsonify({"success": True, "result": answer})
 
-        return jsonify({"success": False, "error": "No solution found in Wolfram Alpha response."})
+        return jsonify({"success": False, "error": "No readable answer from Wolfram Alpha."})
 
     except Exception as e:
-        print(f"[RAW WOLFRAM EXCEPTION] {repr(e)}")
-        print("[TRACEBACK] " + traceback.format_exc())
+        print("[MATH EXCEPTION]", traceback.format_exc())
         return jsonify({
             "success": False,
-            "error": str(e) if str(e).strip() else "Unknown backend failure. Check logs for traceback."
+            "error": str(e) or "Unexpected backend error occurred."
         })
 
-# 💾 Log Memory
+# 💾 Log to Memory
 @app.route("/api/log", methods=["POST"])
 def log():
     return log_entry(request)
 
-# 🔍 Recall Memory
+# 🔍 Retrieve Memory
 @app.route("/api/recall", methods=["GET"])
 def recall():
     return retrieve_entries(request)
@@ -89,76 +81,79 @@ def recall():
 def reflect():
     return reflect_summary(request)
 
-# 🌐 Inline Chat UI
+# 📚 Knowledge Base Query
+@app.route("/api/query-knowledge", methods=["GET"])
+def query_knowledge():
+    return answer_general_knowledge(request)
+
+# 💬 Minimal Frontend
 @app.route("/")
 def index():
     return '''
     <!DOCTYPE html>
     <html>
     <head>
-        <title>Mythiq AI</title>
-        <style>
-            body { background-color: #0f0f0f; color: #ffffff; font-family: sans-serif; padding: 40px; }
-            #chat { max-width: 700px; margin: auto; background: #1c1c1c; padding: 20px; border-radius: 10px; }
-            .message { margin: 10px 0; }
-            .user { color: #7fffd4; font-weight: bold; }
-            .bot { color: #87cefa; }
-        </style>
+      <title>Mythiq AI</title>
+      <style>
+        body { background-color: #0f0f0f; color: #fff; font-family: sans-serif; padding: 40px; }
+        #chat { max-width: 720px; margin: auto; padding: 20px; background: #1a1a1a; border-radius: 10px; }
+        .message { margin: 10px 0; }
+        .user { color: #7fffd4; font-weight: bold; }
+        .bot { color: #87cefa; }
+      </style>
     </head>
     <body>
-        <div id="chat">
-            <h2>🤖 Welcome to Mythiq AI</h2>
-            <div id="messages"></div>
-            <input type="text" id="userInput" placeholder="Try: solve 2x + 5 = 15" style="width: 75%;" />
-            <button onclick="handleUserMessage()">Send</button>
-        </div>
+      <div id="chat">
+        <h2>🤖 Welcome to Mythiq AI</h2>
+        <div id="messages"></div>
+        <input type="text" id="userInput" placeholder="Try: solve 2x + 5 = 15" style="width: 75%;" />
+        <button onclick="handleUserMessage()">Send</button>
+      </div>
 
-        <script>
-            function isMathQuery(msg) {
-                const keys = ['solve', 'calculate', 'compute', 'find', '+', '-', '*', '/', '=', '^', 'x', 'y'];
-                return keys.some(k => msg.toLowerCase().includes(k));
-            }
+      <script>
+        function isMathQuery(msg) {
+          const keys = ['solve', 'calculate', 'compute', 'find', '+', '-', '*', '/', '=', '^', 'x', 'y'];
+          return keys.some(k => msg.toLowerCase().includes(k));
+        }
 
-            async function solveMathProblem(question) {
-                const res = await fetch("/api/solve-math", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ question })
-                });
-                const data = await res.json();
-                return data.success
-                    ? `🧮 Solution: ${data.result}`
-                    : `❌ Error: ${data.error || "No readable output from Wolfram."}`;
-            }
+        async function solveMath(q) {
+          const res = await fetch("/api/solve-math", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ question: q })
+          });
+          const data = await res.json();
+          return data.success ? `🧮 Solution: ${data.result}` : `❌ ${data.error}`;
+        }
 
-            function displayMessage(role, text) {
-                const box = document.getElementById("messages");
-                const msg = document.createElement("div");
-                msg.className = "message " + (role === "user" ? "user" : "bot");
-                msg.textContent = (role === "user" ? "🧑 " : "🤖 ") + text;
-                box.appendChild(msg);
-                box.scrollTop = box.scrollHeight;
-            }
+        async function askKnowledge(q) {
+          const res = await fetch("/api/query-knowledge?q=" + encodeURIComponent(q));
+          const data = await res.json();
+          return data.success ? `📚 ${data.answer}` : `🤖 ${data.answer}`;
+        }
 
-            async function handleUserMessage() {
-                const input = document.getElementById("userInput");
-                const message = input.value.trim();
-                if (!message) return;
-                displayMessage("user", message);
-                input.value = "";
+        function display(role, text) {
+          const box = document.getElementById("messages");
+          const msg = document.createElement("div");
+          msg.className = "message " + (role === "user" ? "user" : "bot");
+          msg.textContent = (role === "user" ? "🧑 " : "🤖 ") + text;
+          box.appendChild(msg);
+          box.scrollTop = box.scrollHeight;
+        }
 
-                if (isMathQuery(message)) {
-                    displayMessage("bot", "🧮 Solving...");
-                    const result = await solveMathProblem(message);
-                    displayMessage("bot", result);
-                } else {
-                    displayMessage("bot", "📘 I currently solve math problems only. Try: solve x^2 + 4x + 4 = 0");
-                }
-            }
-        </script>
+        async function handleUserMessage() {
+          const input = document.getElementById("userInput");
+          const text = input.value.trim();
+          if (!text) return;
+          display("user", text);
+          input.value = "";
+
+          let reply = isMathQuery(text) ? await solveMath(text) : await askKnowledge(text);
+          display("bot", reply);
+        }
+      </script>
     </body>
     </html>
     '''
-
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
