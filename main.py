@@ -1456,4 +1456,6 @@ if __name__ == '__main__':
     print("⚡ Guaranteed Response System: Online")
     print("🌟 Ultimate AI Platform: LIVE!")
     app.run(host='0.0.0.0', port=5000, debug=True)
+from branches.knowledge.controller import knowledge_api
+app.register_blueprint(knowledge_api)
 
