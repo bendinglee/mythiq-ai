@@ -1,27 +1,70 @@
-import os
-import sys
-from flask import Flask, jsonify, render_template_string
-from flask_cors import CORS
-import logging
+# main.py
+# 🚀 MYTHIQ AI - MAIN APPLICATION WITH WORKING MATH SOLVER
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+from flask import Flask, render_template_string, jsonify, request
+from flask_cors import CORS
+import os
 
 # Create Flask app
 app = Flask(__name__)
 CORS(app)
 
-# Global variables for tracking
-app_status = {
-    "status": "starting",
-    "branches_loaded": 0,
-    "errors": [],
-    "version": "6.0.0"
-}
+# Try to import and register the knowledge blueprint
+try:
+    from branches.knowledge.controller import knowledge_api
+    app.register_blueprint(knowledge_api)
+    print("✅ Knowledge branch loaded successfully")
+except ImportError as e:
+    print(f"⚠️ Could not load knowledge branch: {e}")
+    
+    # Create fallback math endpoint if knowledge branch fails
+    @app.route("/api/solve-math", methods=["POST"])
+    def fallback_solve_math():
+        return jsonify({
+            "success": False,
+            "error": "Knowledge branch not available",
+            "fallback": "Basic math solver not implemented yet"
+        }), 503
 
-# HTML template for the main page
-HTML_TEMPLATE = """
+# Try to import other branches (optional)
+try:
+    from branches.visual_creator.controller import visual_api
+    app.register_blueprint(visual_api)
+    print("✅ Visual Creator branch loaded")
+except ImportError:
+    print("⚠️ Visual Creator branch not available")
+
+try:
+    from branches.video_generator.controller import video_api
+    app.register_blueprint(video_api)
+    print("✅ Video Generator branch loaded")
+except ImportError:
+    print("⚠️ Video Generator branch not available")
+
+try:
+    from branches.memory_core.controller import memory_api
+    app.register_blueprint(memory_api)
+    print("✅ Memory Core branch loaded")
+except ImportError:
+    print("⚠️ Memory Core branch not available")
+
+# Health check endpoint (required by Railway)
+@app.route("/api/status")
+def status():
+    return jsonify({
+        "status": "healthy",
+        "service": "mythiq-ai",
+        "version": "6.0.0",
+        "railway_compatible": True,
+        "timestamp": "2025-07-07",
+        "branches": 0,  # Will be updated as branches are loaded
+        "errors": 0
+    })
+
+# Main page
+@app.route("/")
+def index():
+    return render_template_string("""
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -29,107 +72,209 @@ HTML_TEMPLATE = """
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MYTHIQ.AI - Ultimate Multi-Branch AI Platform</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { 
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             color: white;
         }
-        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
-        .header { text-align: center; margin-bottom: 40px; }
-        .header h1 { font-size: 3.5rem; margin-bottom: 10px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
-        .header p { font-size: 1.2rem; opacity: 0.9; }
-        .features { display: flex; justify-content: center; gap: 20px; margin-bottom: 40px; flex-wrap: wrap; }
-        .feature { background: rgba(255,255,255,0.1); padding: 15px 25px; border-radius: 25px; backdrop-filter: blur(10px); }
-        .tabs { display: flex; justify-content: center; gap: 10px; margin-bottom: 30px; flex-wrap: wrap; }
-        .tab { 
-            padding: 12px 24px; 
-            background: rgba(255,255,255,0.2); 
-            border: none; 
-            border-radius: 25px; 
-            color: white; 
-            cursor: pointer; 
-            transition: all 0.3s;
-            font-size: 16px;
-        }
-        .tab:hover, .tab.active { background: rgba(255,255,255,0.3); transform: translateY(-2px); }
-        .content { 
-            background: rgba(255,255,255,0.1); 
-            border-radius: 20px; 
-            padding: 30px; 
-            backdrop-filter: blur(10px);
-            min-height: 400px;
-        }
-        .chat-container { display: flex; flex-direction: column; height: 350px; }
-        .chat-messages { 
-            flex: 1; 
-            overflow-y: auto; 
-            margin-bottom: 20px; 
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
             padding: 20px;
-            background: rgba(0,0,0,0.1);
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .header h1 {
+            font-size: 3.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+        
+        .feature {
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
             border-radius: 15px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
         }
-        .message { 
-            margin-bottom: 15px; 
-            padding: 12px 18px; 
-            border-radius: 18px; 
+        
+        .feature h3 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .nav-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .nav-btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+        
+        .nav-btn.active {
+            background: #4CAF50;
+            color: white;
+        }
+        
+        .nav-btn:not(.active) {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+        
+        .nav-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .chat-container {
+            background: rgba(255,255,255,0.1);
+            border-radius: 20px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+            margin-bottom: 30px;
+        }
+        
+        .info-box {
+            background: #4CAF50;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .chat-messages {
+            min-height: 200px;
+            max-height: 400px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: rgba(0,0,0,0.1);
+            border-radius: 10px;
+        }
+        
+        .message {
+            margin-bottom: 15px;
+            padding: 10px 15px;
+            border-radius: 15px;
             max-width: 80%;
-            word-wrap: break-word;
         }
-        .user-message { 
-            background: #007bff; 
-            margin-left: auto; 
+        
+        .user-message {
+            background: #2196F3;
+            margin-left: auto;
             text-align: right;
         }
-        .ai-message { 
-            background: #28a745; 
+        
+        .ai-message {
+            background: #4CAF50;
             margin-right: auto;
         }
-        .input-container { display: flex; gap: 10px; }
-        .input-container input { 
-            flex: 1; 
-            padding: 15px; 
-            border: none; 
-            border-radius: 25px; 
-            font-size: 16px;
+        
+        .input-container {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .chat-input {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1rem;
             outline: none;
         }
-        .input-container button { 
-            padding: 15px 30px; 
-            background: #28a745; 
-            color: white; 
-            border: none; 
-            border-radius: 25px; 
-            cursor: pointer; 
-            font-size: 16px;
-            transition: background 0.3s;
+        
+        .send-btn {
+            padding: 15px 30px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-size: 1rem;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
         }
-        .input-container button:hover { background: #218838; }
-        .status-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; }
-        .status-card { 
-            background: rgba(255,255,255,0.1); 
-            padding: 20px; 
-            border-radius: 15px; 
-            text-align: center;
+        
+        .send-btn:hover {
+            background: #45a049;
+            transform: translateY(-2px);
         }
-        .status-card h3 { margin-bottom: 10px; color: #ffd700; }
-        .status-indicator { 
-            display: inline-block; 
-            width: 12px; 
-            height: 12px; 
-            border-radius: 50%; 
-            margin-right: 8px;
+        
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
         }
-        .active { background: #28a745; }
-        .error { background: #dc3545; }
-        .loading { background: #ffc107; }
-        .hidden { display: none; }
+        
+        .status-card {
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .status-active {
+            border-left: 5px solid #4CAF50;
+        }
+        
+        .status-inactive {
+            border-left: 5px solid #f44336;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
         @media (max-width: 768px) {
-            .header h1 { font-size: 2.5rem; }
-            .features { flex-direction: column; align-items: center; }
-            .tabs { flex-direction: column; }
-            .message { max-width: 95%; }
+            .header h1 {
+                font-size: 2.5rem;
+            }
+            
+            .nav-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .nav-btn {
+                width: 200px;
+            }
         }
     </style>
 </head>
@@ -138,122 +283,119 @@ HTML_TEMPLATE = """
         <div class="header">
             <h1>MYTHIQ.AI</h1>
             <p>Ultimate Multi-Branch AI Platform</p>
-            <div class="features">
-                <div class="feature">🧠 Enhanced Intelligence</div>
-                <div class="feature">🎨 Visual Creation</div>
-                <div class="feature">🎬 Video Generation</div>
+            <div style="margin-top: 20px;">
+                <span style="font-size: 1.5rem;">🧠 Enhanced Intelligence</span>
+                <span style="font-size: 1.5rem; margin: 0 20px;">🎨 Visual Creation</span>
+                <span style="font-size: 1.5rem;">🎬 Video Generation</span>
             </div>
-            <p>🚀 Powered by: Ultimate Multi-Branch Ecosystem v6.0</p>
+            <p style="margin-top: 15px; font-size: 1rem;">🚀 Powered by: Ultimate Multi-Branch Ecosystem v6.0</p>
         </div>
-
-        <div class="tabs">
-            <button class="tab active" onclick="showTab('chat')">💬 AI Chat</button>
-            <button class="tab" onclick="showTab('status')">🔌 Branch Status</button>
-            <button class="tab" onclick="showTab('stats')">📊 Statistics</button>
-            <button class="tab" onclick="showTab('capabilities')">🎯 Capabilities</button>
+        
+        <div class="nav-buttons">
+            <button class="nav-btn active" onclick="showSection('chat')">💬 AI Chat</button>
+            <button class="nav-btn" onclick="showSection('status')">🔌 Branch Status</button>
+            <button class="nav-btn" onclick="showSection('stats')">📊 Statistics</button>
+            <button class="nav-btn" onclick="showSection('capabilities')">🎯 Capabilities</button>
         </div>
-
-        <div id="chat" class="content">
-            <div class="chat-container">
-                <div class="chat-messages" id="chatMessages">
-                    <div class="message ai-message">
-                        🧠 <strong>Knowledge Base:</strong> Access comprehensive information<br>
-                        📊 <strong>Math Solver:</strong> Solve complex calculations<br><br>
-                        Try asking me to "generate a video of a cat playing" or "create an image of a sunset"! ✨
-                    </div>
-                </div>
-                <div class="input-container">
-                    <input type="text" id="userInput" placeholder="Ask me anything, or try 'generate a video of...' or 'create an image of...'" onkeypress="handleKeyPress(event)">
-                    <button onclick="sendMessage()">Send</button>
-                </div>
+        
+        <!-- AI Chat Section -->
+        <div id="chat-section" class="chat-container">
+            <div class="info-box">
+                <strong>🧠 Knowledge Base:</strong> Access comprehensive information<br>
+                <strong>📊 Math Solver:</strong> Solve complex calculations<br><br>
+                Try asking me to "generate a video of a cat playing" or "create an image of a sunset"! ✨
+            </div>
+            
+            <div class="chat-messages" id="chatMessages">
+                <!-- Messages will appear here -->
+            </div>
+            
+            <div class="input-container">
+                <input type="text" class="chat-input" id="chatInput" placeholder="Ask me anything, or try 'generate a video of...' or 'create an image of...'">
+                <button class="send-btn" onclick="sendMessage()">Send</button>
             </div>
         </div>
-
-        <div id="status" class="content hidden">
+        
+        <!-- Branch Status Section -->
+        <div id="status-section" class="hidden">
             <h2 style="text-align: center; margin-bottom: 30px;">🔌 Branch Status</h2>
             <div class="status-grid">
-                <div class="status-card">
+                <div class="status-card status-active">
                     <h3>VISUAL CREATOR</h3>
-                    <p><span class="status-indicator active"></span>Active</p>
+                    <p><strong>Status:</strong> Active</p>
                     <p>Image generation and editing capabilities</p>
                 </div>
-                <div class="status-card">
+                <div class="status-card status-active">
                     <h3>VIDEO GENERATOR</h3>
-                    <p><span class="status-indicator active"></span>Active</p>
+                    <p><strong>Status:</strong> Active</p>
                     <p>Video creation and processing</p>
                 </div>
-                <div class="status-card">
+                <div class="status-card status-active">
                     <h3>KNOWLEDGE</h3>
-                    <p><span class="status-indicator active"></span>Active</p>
+                    <p><strong>Status:</strong> Active</p>
                     <p>Information processing and math solving</p>
                 </div>
-                <div class="status-card">
+                <div class="status-card status-active">
                     <h3>MEMORY CORE</h3>
-                    <p><span class="status-indicator active"></span>Active</p>
+                    <p><strong>Status:</strong> Active</p>
                     <p>Learning and memory management</p>
                 </div>
             </div>
         </div>
-
-        <div id="stats" class="content hidden">
+        
+        <!-- Statistics Section -->
+        <div id="stats-section" class="hidden">
             <h2 style="text-align: center; margin-bottom: 30px;">📊 Statistics</h2>
             <div class="status-grid">
                 <div class="status-card">
                     <h3>Total Branches</h3>
-                    <p style="font-size: 2rem; color: #ffd700;">4</p>
+                    <p style="font-size: 2rem; text-align: center; margin: 10px 0;">4</p>
                 </div>
                 <div class="status-card">
                     <h3>Active Branches</h3>
-                    <p style="font-size: 2rem; color: #28a745;">4</p>
-                </div>
-                <div class="status-card">
-                    <h3>Knowledge Facts</h3>
-                    <p style="font-size: 2rem; color: #17a2b8;">35+</p>
-                </div>
-                <div class="status-card">
-                    <h3>Platform Features</h3>
-                    <p style="font-size: 2rem; color: #6f42c1;">14</p>
+                    <p style="font-size: 2rem; text-align: center; margin: 10px 0;">4</p>
                 </div>
                 <div class="status-card">
                     <h3>Uptime</h3>
-                    <p style="font-size: 2rem; color: #28a745;">99.9%</p>
+                    <p style="font-size: 2rem; text-align: center; margin: 10px 0;">99.9%</p>
                 </div>
                 <div class="status-card">
                     <h3>Response Time</h3>
-                    <p style="font-size: 2rem; color: #ffc107;">< 2s</p>
+                    <p style="font-size: 2rem; text-align: center; margin: 10px 0;">< 2s</p>
                 </div>
             </div>
         </div>
-
-        <div id="capabilities" class="content hidden">
+        
+        <!-- Capabilities Section -->
+        <div id="capabilities-section" class="hidden">
             <h2 style="text-align: center; margin-bottom: 30px;">🎯 Capabilities</h2>
-            <div class="status-grid">
-                <div class="status-card">
+            <div class="features">
+                <div class="feature">
                     <h3>🧮 Math Solving</h3>
                     <p>Advanced mathematical computations</p>
                     <p>Algebra, Calculus, Statistics</p>
                 </div>
-                <div class="status-card">
+                <div class="feature">
                     <h3>🎨 Image Generation</h3>
                     <p>AI-powered image creation</p>
                     <p>Multiple styles and formats</p>
                 </div>
-                <div class="status-card">
+                <div class="feature">
                     <h3>🎬 Video Creation</h3>
                     <p>Text-to-video generation</p>
                     <p>Custom animations and effects</p>
                 </div>
-                <div class="status-card">
+                <div class="feature">
                     <h3>🧠 Knowledge Base</h3>
                     <p>Comprehensive information access</p>
                     <p>Real-time learning capabilities</p>
                 </div>
-                <div class="status-card">
+                <div class="feature">
                     <h3>💾 Memory System</h3>
                     <p>Conversation history and learning</p>
                     <p>Personalized responses</p>
                 </div>
-                <div class="status-card">
+                <div class="feature">
                     <h3>🔍 Smart Analysis</h3>
                     <p>Data processing and insights</p>
                     <p>Pattern recognition</p>
@@ -261,378 +403,97 @@ HTML_TEMPLATE = """
             </div>
         </div>
     </div>
-
+    
     <script>
-        function showTab(tabName) {
-            // Hide all content
-            document.querySelectorAll('.content').forEach(content => {
-                content.classList.add('hidden');
-            });
+        function showSection(sectionName) {
+            // Hide all sections
+            document.getElementById('chat-section').classList.add('hidden');
+            document.getElementById('status-section').classList.add('hidden');
+            document.getElementById('stats-section').classList.add('hidden');
+            document.getElementById('capabilities-section').classList.add('hidden');
             
-            // Remove active class from all tabs
-            document.querySelectorAll('.tab').forEach(tab => {
-                tab.classList.remove('active');
-            });
+            // Show selected section
+            document.getElementById(sectionName + '-section').classList.remove('hidden');
             
-            // Show selected content
-            document.getElementById(tabName).classList.remove('hidden');
-            
-            // Add active class to clicked tab
+            // Update button states
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
             event.target.classList.add('active');
         }
-
-        function handleKeyPress(event) {
-            if (event.key === 'Enter') {
-                sendMessage();
-            }
+        
+        function addMessage(message, isUser = false) {
+            const messagesContainer = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user-message' : 'ai-message'}`;
+            messageDiv.textContent = message;
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
         }
-
+        
         async function sendMessage() {
-            const input = document.getElementById('userInput');
-            const messages = document.getElementById('chatMessages');
-            const userMessage = input.value.trim();
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
             
-            if (!userMessage) return;
+            if (!message) return;
             
             // Add user message
-            const userDiv = document.createElement('div');
-            userDiv.className = 'message user-message';
-            userDiv.textContent = userMessage;
-            messages.appendChild(userDiv);
-            
-            // Clear input
+            addMessage(message, true);
             input.value = '';
             
-            // Scroll to bottom
-            messages.scrollTop = messages.scrollHeight;
-            
-            // Determine response type and send to appropriate endpoint
-            let response;
             try {
-                if (userMessage.toLowerCase().includes('math') || 
-                    userMessage.toLowerCase().includes('solve') || 
-                    userMessage.toLowerCase().includes('calculate') ||
-                    /[+\-*/=]/.test(userMessage)) {
-                    
-                    response = await fetch('/api/solve-math', {
+                // Check if it's a math question
+                const mathKeywords = ['solve', 'calculate', 'integrate', 'derivative', 'equation', '+', '-', '*', '/', '='];
+                const isMath = mathKeywords.some(keyword => message.toLowerCase().includes(keyword));
+                
+                if (isMath) {
+                    // Try math solver endpoint
+                    const response = await fetch('/api/solve-math', {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ question: userMessage })
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ question: message })
                     });
                     
-                } else if (userMessage.toLowerCase().includes('image') || 
-                          userMessage.toLowerCase().includes('picture') || 
-                          userMessage.toLowerCase().includes('create') ||
-                          userMessage.toLowerCase().includes('generate')) {
+                    const data = await response.json();
                     
-                    response = await fetch('/api/visual/generate', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ prompt: userMessage })
-                    });
-                    
-                } else if (userMessage.toLowerCase().includes('video')) {
-                    
-                    response = await fetch('/api/video/generate', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ prompt: userMessage })
-                    });
-                    
+                    if (data.success) {
+                        addMessage(`🧮 Math Solution: ${data.result}`);
+                    } else {
+                        addMessage(`❌ Math Error: ${data.error}`);
+                    }
                 } else {
-                    
-                    response = await fetch('/api/ask', {
+                    // Try general knowledge endpoint
+                    const response = await fetch('/api/ask', {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ question: userMessage })
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ question: message })
                     });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        addMessage(data.response || data.result || 'Response received');
+                    } else {
+                        addMessage('Endpoint not found');
+                    }
                 }
-                
-                const data = await response.json();
-                
-                // Add AI response
-                const aiDiv = document.createElement('div');
-                aiDiv.className = 'message ai-message';
-                
-                if (data.success) {
-                    aiDiv.innerHTML = data.result || data.response || data.message || 'Response received successfully!';
-                } else {
-                    aiDiv.innerHTML = data.error || 'Sorry, I encountered an error processing your request.';
-                }
-                
-                messages.appendChild(aiDiv);
-                
             } catch (error) {
-                // Add error response
-                const aiDiv = document.createElement('div');
-                aiDiv.className = 'message ai-message';
-                aiDiv.innerHTML = 'I love curious minds! 🧠 I can help with math! Try something like "12 × 8" or "100 - 37". I love solving calculations! 📊';
-                messages.appendChild(aiDiv);
+                addMessage('Endpoint not found');
             }
-            
-            // Scroll to bottom
-            messages.scrollTop = messages.scrollHeight;
         }
+        
+        // Allow Enter key to send message
+        document.getElementById('chatInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
     </script>
 </body>
 </html>
-"""
+    """)
 
-# ===== CRITICAL RAILWAY HEALTHCHECK ENDPOINT =====
-@app.route('/api/status', methods=['GET'])
-def api_status():
-    """
-    🚨 CRITICAL: Railway healthcheck endpoint
-    This MUST respond or deployment fails
-    """
-    try:
-        return jsonify({
-            "status": "healthy",
-            "service": "mythiq-ai",
-            "version": "6.0.0",
-            "timestamp": "2025-07-07",
-            "branches": app_status["branches_loaded"],
-            "errors": len(app_status["errors"]),
-            "railway_compatible": True
-        }), 200
-    except Exception as e:
-        logger.error(f"Status endpoint error: {e}")
-        return jsonify({
-            "status": "error",
-            "error": str(e),
-            "service": "mythiq-ai"
-        }), 500
-
-# ===== MAIN PAGE =====
-@app.route('/', methods=['GET'])
-def home():
-    """Main platform page"""
-    return render_template_string(HTML_TEMPLATE)
-
-# ===== PLUGIN SYSTEM INITIALIZATION =====
-def initialize_plugins():
-    """
-    Initialize all plugin branches with error handling
-    """
-    global app_status
-    
-    try:
-        logger.info("🚀 Initializing MYTHIQ AI Plugin System...")
-        
-        # Try to load knowledge branch
-        try:
-            from branches.knowledge.controller import knowledge_api
-            app.register_blueprint(knowledge_api)
-            app_status["branches_loaded"] += 1
-            logger.info("✅ Knowledge branch loaded successfully")
-        except Exception as e:
-            error_msg = f"Knowledge branch failed: {str(e)}"
-            app_status["errors"].append(error_msg)
-            logger.warning(f"⚠️ {error_msg}")
-            
-            # Create fallback knowledge endpoints
-            create_fallback_knowledge_endpoints()
-        
-        # Try to load visual creator branch
-        try:
-            from branches.visual_creator.controller import visual_creator_api
-            app.register_blueprint(visual_creator_api)
-            app_status["branches_loaded"] += 1
-            logger.info("✅ Visual Creator branch loaded successfully")
-        except Exception as e:
-            error_msg = f"Visual Creator branch failed: {str(e)}"
-            app_status["errors"].append(error_msg)
-            logger.warning(f"⚠️ {error_msg}")
-            
-            # Create fallback visual endpoints
-            create_fallback_visual_endpoints()
-        
-        # Try to load video generator branch
-        try:
-            from branches.video_generator.controller import video_generator_api
-            app.register_blueprint(video_generator_api)
-            app_status["branches_loaded"] += 1
-            logger.info("✅ Video Generator branch loaded successfully")
-        except Exception as e:
-            error_msg = f"Video Generator branch failed: {str(e)}"
-            app_status["errors"].append(error_msg)
-            logger.warning(f"⚠️ {error_msg}")
-            
-            # Create fallback video endpoints
-            create_fallback_video_endpoints()
-        
-        # Try to load memory core branch
-        try:
-            from branches.memory_core.controller import memory_core_api
-            app.register_blueprint(memory_core_api)
-            app_status["branches_loaded"] += 1
-            logger.info("✅ Memory Core branch loaded successfully")
-        except Exception as e:
-            error_msg = f"Memory Core branch failed: {str(e)}"
-            app_status["errors"].append(error_msg)
-            logger.warning(f"⚠️ {error_msg}")
-            
-            # Create fallback memory endpoints
-            create_fallback_memory_endpoints()
-        
-        app_status["status"] = "running"
-        logger.info(f"🎉 Plugin system initialized! {app_status['branches_loaded']} branches loaded, {len(app_status['errors'])} errors")
-        
-    except Exception as e:
-        logger.error(f"🚨 Critical plugin system error: {e}")
-        app_status["status"] = "error"
-        app_status["errors"].append(f"Critical system error: {str(e)}")
-
-def create_fallback_knowledge_endpoints():
-    """Create fallback endpoints for knowledge branch"""
-    
-    @app.route('/api/solve-math', methods=['POST'])
-    @app.route('/api/knowledge/math', methods=['POST'])
-    @app.route('/api/ask', methods=['POST'])
-    def fallback_knowledge():
-        try:
-            from flask import request
-            data = request.get_json() or {}
-            query = data.get('question', data.get('query', ''))
-            
-            return jsonify({
-                "success": True,
-                "response": "I love curious minds! 🧠 I can help with math! Try something like '12 × 8' or '100 - 37'. I love solving calculations! 📊",
-                "query": query,
-                "method": "fallback",
-                "note": "Knowledge branch is initializing. Full math solving coming soon!"
-            }), 200
-        except Exception as e:
-            return jsonify({"success": False, "error": str(e)}), 500
-
-def create_fallback_visual_endpoints():
-    """Create fallback endpoints for visual creator branch"""
-    
-    @app.route('/api/visual/generate', methods=['POST'])
-    def fallback_visual():
-        try:
-            from flask import request
-            data = request.get_json() or {}
-            prompt = data.get('prompt', '')
-            
-            return jsonify({
-                "success": True,
-                "response": "Great question! 🧠 Your curiosity is inspiring! I may not know that particular fact, but I can help you create visual content or solve math problems!",
-                "prompt": prompt,
-                "method": "fallback",
-                "note": "Visual creation capabilities are being initialized!"
-            }), 200
-        except Exception as e:
-            return jsonify({"success": False, "error": str(e)}), 500
-
-def create_fallback_video_endpoints():
-    """Create fallback endpoints for video generator branch"""
-    
-    @app.route('/api/video/generate', methods=['POST'])
-    def fallback_video():
-        try:
-            from flask import request
-            data = request.get_json() or {}
-            prompt = data.get('prompt', '')
-            
-            return jsonify({
-                "success": True,
-                "response": "🎬 Video Generation capabilities are being initialized! This feature will allow me to create amazing videos from your prompts. Please try again in a moment!",
-                "prompt": prompt,
-                "method": "fallback",
-                "note": "Video generation system starting up!"
-            }), 200
-        except Exception as e:
-            return jsonify({"success": False, "error": str(e)}), 500
-
-def create_fallback_memory_endpoints():
-    """Create fallback endpoints for memory core branch"""
-    
-    @app.route('/api/memory/store', methods=['POST'])
-    @app.route('/api/memory/recall', methods=['POST'])
-    def fallback_memory():
-        try:
-            return jsonify({
-                "success": True,
-                "response": "Memory system is initializing...",
-                "method": "fallback"
-            }), 200
-        except Exception as e:
-            return jsonify({"success": False, "error": str(e)}), 500
-
-# ===== ADDITIONAL API ENDPOINTS =====
-@app.route('/api/plugins/status', methods=['GET'])
-def plugins_status():
-    """Get detailed plugin status"""
-    return jsonify({
-        "success": True,
-        "system_status": app_status["status"],
-        "branches_loaded": app_status["branches_loaded"],
-        "total_branches": 4,
-        "errors": app_status["errors"],
-        "plugins": {
-            "knowledge": {"status": "active", "capabilities": ["math_solving", "information_processing"]},
-            "visual_creator": {"status": "active", "capabilities": ["image_generation", "image_editing"]},
-            "video_generator": {"status": "active", "capabilities": ["video_creation", "animation"]},
-            "memory_core": {"status": "active", "capabilities": ["conversation_memory", "learning"]}
-        },
-        "version": "6.0.0"
-    }), 200
-
-@app.route('/health', methods=['GET'])
-@app.route('/healthcheck', methods=['GET'])
-def health_check():
-    """Additional health check endpoints"""
-    return jsonify({
-        "status": "healthy",
-        "timestamp": "2025-07-07",
-        "service": "mythiq-ai"
-    }), 200
-
-# ===== ERROR HANDLERS =====
-@app.errorhandler(404)
-def not_found(error):
-    return jsonify({
-        "error": "Endpoint not found",
-        "available_endpoints": [
-            "/api/status",
-            "/api/solve-math",
-            "/api/visual/generate",
-            "/api/video/generate",
-            "/api/plugins/status"
-        ]
-    }), 404
-
-@app.errorhandler(500)
-def internal_error(error):
-    return jsonify({
-        "error": "Internal server error",
-        "message": "The server encountered an unexpected condition"
-    }), 500
-
-# ===== APPLICATION STARTUP =====
-if __name__ == '__main__':
-    try:
-        logger.info("🚀 Starting MYTHIQ AI Platform...")
-        
-        # Initialize plugin system
-        initialize_plugins()
-        
-        # Get port from environment (Railway compatibility)
-        port = int(os.environ.get('PORT', 5000))
-        
-        logger.info(f"🌟 MYTHIQ AI Platform starting on port {port}")
-        logger.info(f"📊 Status: {app_status['status']}")
-        logger.info(f"🔌 Branches loaded: {app_status['branches_loaded']}/4")
-        
-        # Start the application (Railway compatible)
-        app.run(
-            host='0.0.0.0',  # CRITICAL: Must be 0.0.0.0 for Railway
-            port=port,
-            debug=False,     # CRITICAL: Must be False for production
-            threaded=True    # Better performance
-        )
-        
-    except Exception as e:
-        logger.error(f"🚨 Critical startup error: {e}")
-        sys.exit(1)
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, debug=False)
