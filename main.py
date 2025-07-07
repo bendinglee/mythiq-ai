@@ -4,11 +4,10 @@ import wolframalpha
 
 app = Flask(__name__)
 
-# 🔐 Wolfram Alpha key with fallback parsing enabled
+# ✅ Wolfram Alpha client (without unsupported args)
 WOLFRAM_APP_ID = os.getenv("WOLFRAM_APP_ID")
-client = wolframalpha.Client(WOLFRAM_APP_ID, reinterpret=True)
+client = wolframalpha.Client(WOLFRAM_APP_ID)
 
-# ✅ Healthcheck route
 @app.route("/api/status", methods=["GET"])
 def status():
     return jsonify({
@@ -16,13 +15,11 @@ def status():
         "message": "Mythiq backend is operational 🧠"
     }), 200
 
-# 🧮 Math solver route with fallback logic + logs
 @app.route("/api/solve-math", methods=["POST"])
 def solve_math():
     data = request.get_json()
     question = data.get("question", "").strip()
 
-    # Normalize for Wolfram
     if "solve" in question.lower() and "=" in question.lower() and "for" not in question.lower():
         question += " for x"
 
@@ -31,7 +28,6 @@ def solve_math():
         pod_data = []
 
         print(f"[WOLFRAM QUERY] {question}")
-
         for pod in res.pods:
             title = pod.title.lower()
             texts = list(pod.texts)
@@ -55,7 +51,6 @@ def solve_math():
         print(f"[WOLFRAM EXCEPTION] {repr(e)}")
         return jsonify({"success": False, "error": str(e) or "Unknown error occurred."})
 
-# 🌐 Inline UI
 @app.route("/")
 def index():
     return '''
@@ -65,7 +60,7 @@ def index():
         <title>Mythiq AI</title>
         <style>
             body { background-color: #0f0f0f; color: #ffffff; font-family: sans-serif; padding: 40px; }
-            #chat { max-width: 720px; margin: auto; background: #1c1c1c; padding: 20px; border-radius: 10px; }
+            #chat { max-width: 700px; margin: auto; background: #1c1c1c; padding: 20px; border-radius: 10px; }
             .message { margin: 10px 0; }
             .user { color: #7fffd4; font-weight: bold; }
             .bot { color: #87cefa; }
@@ -122,7 +117,7 @@ def index():
                     const result = await solveMathProblem(message);
                     displayMessage("bot", result);
                 } else {
-                    displayMessage("bot", "📘 I currently support solving math questions only. Try: solve x^2 + 4x + 4 = 0");
+                    displayMessage("bot", "📘 I currently solve math problems. Try: solve x^2 + 4x + 4 = 0");
                 }
             }
         </script>
