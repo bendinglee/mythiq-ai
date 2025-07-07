@@ -4,7 +4,7 @@ import requests
 import traceback
 from xml.etree import ElementTree as ET
 
-# 🧠 Mythiq Modules
+# Mythiq Modules
 from branches.self_learning.log import log_entry
 from branches.self_learning.recall import retrieve_entries
 from branches.self_learning.reflect import reflect_summary
@@ -21,36 +21,57 @@ def status():
 @app.route("/api/solve-math", methods=["POST"])
 def solve_math():
     data = request.get_json()
-    question = data.get("question", "").strip()
-    if "solve" in question.lower() and "=" in question and "for" not in question:
+    original_question = data.get("question", "").strip()
+    question = original_question.lower().replace("^", "**").replace(" ", "")
+
+    if "=" in question and "for" not in question:
         question += " for x"
+
     try:
         res = requests.get(
             "https://api.wolframalpha.com/v2/query",
-            params={"input": question, "appid": WOLFRAM_APP_ID, "format": "plaintext"}
+            params={
+                "input": question,
+                "appid": WOLFRAM_APP_ID,
+                "format": "plaintext"
+            }
         )
+        print(f"[WOLFRAM URL] {res.url}")
+        print("[WOLFRAM XML DUMP]")
+        print(res.text)
+
         root = ET.fromstring(res.content)
+
         for pod in root.findall(".//pod"):
             title = pod.attrib.get("title", "").lower()
-            if any(k in title for k in ["solution", "result", "answer", "root"]):
+            if any(k in title for k in ["solution", "result", "answer", "root", "exact result"]):
                 text = pod.find(".//plaintext")
                 if text is not None and text.text:
                     answer = text.text.strip()
-                    # 🔁 Log result
+
                     log_payload = {
-                        "input": question,
+                        "input": original_question,
                         "output": answer,
                         "tags": ["math", "wolfram"],
                         "success": True,
-                        "meta": {"source": "solve-math"}
+                        "meta": {
+                            "cleaned_input": question,
+                            "source": "solve-math"
+                        }
                     }
                     with app.test_request_context(json=log_payload):
                         log_entry(request)
+
                     return jsonify({"success": True, "result": answer})
+
         return jsonify({"success": False, "error": "No readable answer from Wolfram Alpha."})
+
     except Exception as e:
         print("[MATH EXCEPTION]", traceback.format_exc())
-        return jsonify({"success": False, "error": str(e) or "Unexpected backend error occurred."})
+        return jsonify({
+            "success": False,
+            "error": str(e) or "Unexpected backend error occurred."
+        })
 
 @app.route("/api/log", methods=["POST"])
 def log():
@@ -141,7 +162,7 @@ def index():
           } else if (intent === "knowledge") {
             reply = await askKnowledge(text);
           } else {
-            reply = "📘 I'm learning more every day. Try: solve x^2 + 4x + 4 = 0 or ask what is photosynthesis.";
+            reply = "📘 I'm learning every day. Try: solve x^2 + 4x + 4 = 0 or ask what is gravity.";
           }
 
           display("bot", reply);
