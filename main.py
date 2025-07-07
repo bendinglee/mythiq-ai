@@ -3,6 +3,8 @@ import os
 import requests
 import traceback
 from xml.etree import ElementTree as ET
+from dotenv import load_dotenv
+load_dotenv()
 
 # Mythiq Modules
 from branches.self_learning.log import log_entry
