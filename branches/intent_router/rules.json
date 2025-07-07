@@ -1,0 +1,7 @@
+{
+  "math": ["solve", "calculate", "equation", "x =", "find x", "+", "-", "*", "/", "="],
+  "image": ["generate image", "draw", "picture of", "visualize", "create art", "make a graphic"],
+  "knowledge": ["what is", "who is", "define", "tell me about", "explain", "where is", "when did", "who was"],
+  "code": ["write code", "python function", "script", "bug", "error", "debug", "fix this", "for loop"],
+  "chat": ["hi", "hello", "how are you", "i feel", "joke", "fun fact", "thanks"]
+}
