@@ -1,3 +1,6 @@
+# branches/knowledge/controller.py
+# 🧮 WORKING MATH SOLVER WITH WOLFRAM ALPHA
+
 from flask import Blueprint, request, jsonify
 import os
 import wolframalpha
@@ -134,4 +137,3 @@ def knowledge_status():
             "general_knowledge"
         ]
     })
-
