@@ -1,25 +1,30 @@
 from flask import Flask, request, jsonify
 import os
-import requests
 import traceback
-from xml.etree import ElementTree as ET
 from dotenv import load_dotenv
+from xml.etree import ElementTree as ET
 
-# Load environment variables
+# 🔐 Load environment variables
 load_dotenv()
 
-# Mythiq Modules
-from branches.self_learning.log import log_entry
-from branches.self_learning.recall import retrieve_entries
-from branches.self_learning.reflect import reflect_summary
-from branches.general_knowledge.query import answer_general_knowledge
-from branches.intent_router.classifier import classify_intent
-from branches.math_solver.solver import solve_math_query
-from branches.semantic_search.query_router import query_fuzzy_route
-from branches.core_router.dispatcher import dispatch_input
-
+# ✅ Core App Init
 app = Flask(__name__)
 WOLFRAM_APP_ID = os.getenv("WOLFRAM_APP_ID")
+
+# ✅ Robust Import Handling (Pro Debug Tip)
+try:
+    from branches.self_learning.log import log_entry
+    from branches.self_learning.recall import retrieve_entries
+    from branches.self_learning.reflect import reflect_summary
+    from branches.general_knowledge.query import answer_general_knowledge
+    from branches.intent_router.classifier import classify_intent
+    from branches.math_solver.solver import solve_math_query
+    from branches.semantic_search.query_router import query_fuzzy_route
+    from branches.core_router.dispatcher import dispatch_input
+except Exception as e:
+    print("🔥 Module import error:", e)
+
+# ✅ Core Routes
 
 @app.route("/api/status", methods=["GET"])
 def status():
@@ -27,18 +32,21 @@ def status():
 
 @app.route("/api/solve-math", methods=["POST"])
 def solve_math():
-    data = request.get_json()
-    question = data.get("question", "").strip()
-    result = solve_math_query(question)
-    return jsonify(result)
+    try:
+        data = request.get_json()
+        question = data.get("question", "").strip()
+        result = solve_math_query(question)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
 
 @app.route("/api/query-knowledge", methods=["GET"])
 def query_knowledge():
     return answer_general_knowledge(request)
 
-@app.route("/api/classify-intent", methods=["GET"])
-def classify():
-    return classify_intent(request)
+@app.route("/api/query-fuzzy", methods=["GET"])
+def query_fuzzy():
+    return query_fuzzy_route()
 
 @app.route("/api/recall", methods=["GET"])
 def recall():
@@ -52,14 +60,15 @@ def reflect():
 def log():
     return log_entry(request)
 
-@app.route("/api/query-fuzzy", methods=["GET"])
-def query_fuzzy():
-    return query_fuzzy_route()
+@app.route("/api/classify-intent", methods=["GET"])
+def classify():
+    return classify_intent(request)
 
 @app.route("/api/dispatch", methods=["POST"])
 def dispatch():
     return dispatch_input(request)
 
+# ✅ Lightweight Frontend for Testing
 @app.route("/")
 def index():
     return '''
@@ -79,7 +88,7 @@ def index():
       <div id="chat">
         <h2>🤖 Welcome to Mythiq AI</h2>
         <div id="messages"></div>
-        <input type="text" id="userInput" placeholder="Try: who ruled USA first?" style="width: 75%;" />
+        <input type="text" id="userInput" placeholder="Ask me anything..." style="width: 75%;" />
         <button onclick="handleUserMessage()">Send</button>
       </div>
       <script>
@@ -96,8 +105,7 @@ def index():
             body: JSON.stringify({ input: text })
           });
           const data = await res.json();
-          const reply = data.reply || "🤖 Hmm, I didn’t quite get that.";
-          display("bot", reply);
+          display("bot", data.reply || "🤖 No response available.");
         }
 
         function display(role, text) {
