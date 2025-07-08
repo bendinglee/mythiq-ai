@@ -4,7 +4,7 @@ import traceback
 import json
 from dotenv import load_dotenv
 
-# 🔐 Load .env
+# 🔐 Load environment variables
 load_dotenv()
 HF_TOKEN = os.getenv("HF_TOKEN")
 WOLFRAM_APP_ID = os.getenv("WOLFRAM_APP_ID")
@@ -13,24 +13,33 @@ print("🚀 Mythiq startup initiated...")
 print("HF_TOKEN present:", bool(HF_TOKEN))
 print("WOLFRAM_APP_ID present:", bool(WOLFRAM_APP_ID))
 
+# ✅ Initialize Flask app
 app = Flask(__name__, static_url_path='/static')
 
-# 🌐 Modular fallback-safe route injection
-from branches import init_modules
-init_modules(app)
+# 🧠 Fallback-safe route injection
+print("🔁 Importing fallback-safe modules...")
+try:
+    from branches import init_modules
+    init_modules(app)
+except Exception as e:
+    print("❌ Error loading dynamic modules:", traceback.format_exc())
 
-# ✅ Core branch imports
-from branches.math_solver.solver import solve_math_query
-from branches.doc_ingestor.routes import load_docs_route
-from branches.general_knowledge.query import answer_general_knowledge
-from branches.intent_router.classifier import classify_intent
-from branches.semantic_search.query_router import query_fuzzy_route
-from branches.self_learning.log import log_entry
-from branches.self_learning.recall import retrieve_entries
-from branches.self_learning.reflect import reflect_summary
-from branches.core_router.dispatcher import dispatch_input
+# ✅ Core functional routes (non-optional)
+try:
+    from branches.math_solver.solver import solve_math_query
+    from branches.doc_ingestor.routes import load_docs_route
+    from branches.general_knowledge.query import answer_general_knowledge
+    from branches.intent_router.classifier import classify_intent
+    from branches.semantic_search.query_router import query_fuzzy_route
+    from branches.self_learning.log import log_entry
+    from branches.self_learning.recall import retrieve_entries
+    from branches.self_learning.reflect import reflect_summary
+    from branches.core_router.dispatcher import dispatch_input
+    print("✅ Core route modules loaded.")
+except Exception as e:
+    print("❌ Core import failed:", traceback.format_exc())
 
-# ✅ ROUTES
+# ✅ API ROUTES
 
 @app.route("/api/status", methods=["GET"])
 def status():
@@ -114,6 +123,7 @@ def gallery():
 def index():
     return render_template("index.html")
 
+# ✅ Final boot confirmation before starting server
 print("✅ Reached end of main.py — launching Flask...")
 
 if __name__ == "__main__":
