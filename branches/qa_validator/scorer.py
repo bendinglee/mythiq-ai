@@ -1,16 +1,23 @@
 from sentence_transformers import SentenceTransformer, util
 
+# ✅ Initialize model at module level
 model = SentenceTransformer("all-MiniLM-L6-v2")
 
 def score_answer(question, answer, source_reference):
     try:
         if not source_reference:
-            return { "confidence": 0, "match": False, "feedback": "No reference provided." }
+            return {
+                "confidence": 0,
+                "match": False,
+                "feedback": "No reference provided."
+            }
 
+        # ✅ Encode inputs
         q_embed = model.encode(question, convert_to_tensor=True)
         a_embed = model.encode(answer, convert_to_tensor=True)
         s_embed = model.encode(source_reference, convert_to_tensor=True)
 
+        # ✅ Compute cosine similarity
         q_a_sim = util.pytorch_cos_sim(q_embed, a_embed).item()
         a_s_sim = util.pytorch_cos_sim(a_embed, s_embed).item()
 
@@ -26,4 +33,8 @@ def score_answer(question, answer, source_reference):
         }
 
     except Exception as e:
-        return { "confidence": 0, "match": False, "feedback": f"Error: {e}" }
+        return {
+            "confidence": 0,
+            "match": False,
+            "feedback": f"Error during scoring: {e}"
+        }
