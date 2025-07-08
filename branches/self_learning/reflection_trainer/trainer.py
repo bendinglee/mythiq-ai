@@ -1,17 +1,12 @@
 import json
-import os
-from huggingface_hub import hf_hub_download
 from sentence_transformers import SentenceTransformer
-
 from branches.semantic_search.embedder import embed_texts
 from branches.self_learning.reflection_trainer.vector_updater import save_new_embeddings
 
 LOG_DB = "memory/logs.json"
 
-# 🧠 Load model safely from HF Hub (future-proof)
-MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
-_ = hf_hub_download(repo_id=MODEL_NAME, filename="config.json", cache_dir="./models")
-model = SentenceTransformer(MODEL_NAME)
+# 🚀 Load model using built-in SentenceTransformer logic
+model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
 
 def extract_failed_queries():
     try:
@@ -48,4 +43,8 @@ def reflect_and_embed():
     embeddings = embed_texts(questions)
 
     updated = save_new_embeddings(reflections, embeddings)
-    return { "success": True, "updated": updated, "message": "💡 Reflections embedded and added to memory." }
+    return {
+        "success": True,
+        "updated": updated,
+        "message": "💡 Reflections embedded and added to memory."
+    }
