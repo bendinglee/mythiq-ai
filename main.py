@@ -19,7 +19,7 @@ app = Flask(__name__, static_url_path='/static')
 from branches import init_modules
 init_modules(app)
 
-# ✅ Core Routes (direct logic)
+# ✅ Core branch imports
 from branches.math_solver.solver import solve_math_query
 from branches.doc_ingestor.routes import load_docs_route
 from branches.general_knowledge.query import answer_general_knowledge
@@ -30,7 +30,7 @@ from branches.self_learning.recall import retrieve_entries
 from branches.self_learning.reflect import reflect_summary
 from branches.core_router.dispatcher import dispatch_input
 
-# ✅ API ROUTES
+# ✅ ROUTES
 
 @app.route("/api/status", methods=["GET"])
 def status():
@@ -114,6 +114,8 @@ def gallery():
 def index():
     return render_template("index.html")
 
+print("✅ Reached end of main.py — launching Flask...")
+
 if __name__ == "__main__":
-    print("🟢 Flask app running on http://localhost:5000")
+    print("🟢 Flask app running at http://localhost:5000")
     app.run(host="0.0.0.0", port=5000)
