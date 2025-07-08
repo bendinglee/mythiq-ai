@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 import os
 import traceback
+import json
 from dotenv import load_dotenv
 
 # 🔐 Load .env variables
@@ -10,7 +11,7 @@ WOLFRAM_APP_ID = os.getenv("WOLFRAM_APP_ID")
 
 app = Flask(__name__)
 
-# ✅ Core functionality branches
+# ✅ Core system routes
 try:
     from branches.self_learning.log import log_entry
     from branches.self_learning.recall import retrieve_entries
@@ -24,35 +25,43 @@ try:
 except Exception as e:
     print("🔥 Core import error:", traceback.format_exc())
 
-# 🧠 Optional: Self-reflection (non-fatal)
+# 🧠 Optional: Self-reflection
 try:
     from branches.self_learning.reflection_trainer.trainer_route import reflect_logs_route
 except Exception as e:
     print("🧠 Reflection module unavailable:", e)
     def reflect_logs_route():
-        return jsonify({ "success": False, "message": "Reflection disabled." })
+        return jsonify({"success": False, "message": "Reflection module not installed."})
 
-# 🎨 Optional: Image generation (non-fatal)
+# 🎨 Optional: Image generation
 try:
     from branches.image_generator.routes import generate_image_route
 except Exception as e:
-    print("🎨 Image gen offline:", e)
+    print("🎨 Image gen unavailable:", e)
     def generate_image_route():
-        return jsonify({ "success": False, "message": "Image generation unavailable." })
+        return jsonify({"success": False, "message": "Image generation offline."})
 
-# ✅ NEW: QA Validator
+# 🔍 Optional: SEO optimization
+try:
+    from branches.seo_master.routes import optimize_keywords_route
+except Exception as e:
+    print("🔎 SEO optimizer unavailable:", e)
+    def optimize_keywords_route():
+        return jsonify({"success": False, "message": "SEO module offline."})
+
+# 🧪 Optional: QA validator
 try:
     from branches.qa_validator.routes import validate_answer_route
 except Exception as e:
-    print("🧪 QA validator failed to load:", e)
+    print("🧪 QA validator offline:", e)
     def validate_answer_route():
-        return jsonify({ "success": False, "message": "Validation module offline." })
+        return jsonify({"success": False, "message": "Validator module unavailable."})
 
-# ✅ Routes
+# ✅ API Endpoints
 
 @app.route("/api/status", methods=["GET"])
 def status():
-    return jsonify({ "status": "ok", "message": "Mythiq backend active 🔥" })
+    return jsonify({ "status": "ok", "message": "Mythiq backend running 🔥" })
 
 @app.route("/api/solve-math", methods=["POST"])
 def solve_math():
@@ -103,7 +112,26 @@ def generate_image():
 def validate_answer():
     return validate_answer_route()
 
-# ✅ Minimal web frontend
+@app.route("/api/optimize-keywords", methods=["POST"])
+def optimize_keywords():
+    return optimize_keywords_route()
+
+@app.route("/gallery")
+def gallery():
+    try:
+        with open("memory/image_logs.json", "r", encoding="utf-8") as f:
+            logs = json.load(f)
+        html = "<h2>🖼️ Mythiq Gallery</h2><div style='display:grid;gap:20px;'>"
+        for entry in reversed(logs[-50:]):
+            prompt = entry.get("crafted_prompt", entry.get("input_prompt", ""))
+            img = entry.get("image_url", "")
+            html += f"<div><img src='{img}' style='max-width:100%;border-radius:8px;'/><p>{prompt}</p></div>"
+        html += "</div>"
+        return html
+    except Exception as e:
+        return f"<h2>Gallery Load Error:</h2><pre>{e}</pre>"
+
+# ✅ Frontend UI
 @app.route("/")
 def index():
     return '''
@@ -165,6 +193,6 @@ def index():
     </html>
     '''
 
-# ✅ Launch app
+# ✅ Run the app
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
