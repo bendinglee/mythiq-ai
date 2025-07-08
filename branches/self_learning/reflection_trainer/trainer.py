@@ -1,8 +1,17 @@
 import json
+import os
+from huggingface_hub import hf_hub_download
+from sentence_transformers import SentenceTransformer
+
 from branches.semantic_search.embedder import embed_texts
 from branches.self_learning.reflection_trainer.vector_updater import save_new_embeddings
 
 LOG_DB = "memory/logs.json"
+
+# 🧠 Load model safely from HF Hub (future-proof)
+MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
+_ = hf_hub_download(repo_id=MODEL_NAME, filename="config.json", cache_dir="./models")
+model = SentenceTransformer(MODEL_NAME)
 
 def extract_failed_queries():
     try:
@@ -11,7 +20,6 @@ def extract_failed_queries():
     except:
         return []
 
-    # Pull unanswered/failure logs
     failed = []
     for log in logs:
         if not log.get("success") and log.get("input"):
@@ -23,7 +31,6 @@ def extract_failed_queries():
     return failed
 
 def suggest_reflections(failed_entries):
-    # Naive generator — can be replaced by LLM or curated fallback
     reflections = []
     for entry in failed_entries:
         q = entry["question"]
