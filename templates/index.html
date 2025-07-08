@@ -1,11 +1,32 @@
-<!-- templates/index.html -->
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Mythiq AI</title>
+  <title>Mythiq UI</title>
+  <link rel="stylesheet" href="/static/styles.css" />
 </head>
 <body>
-  <h1>🧠 Mythiq is alive!</h1>
-  <p>Welcome to the cognitive hub. Your backend is operational.</p>
+  <h1>🧠 Mythiq AI Interface</h1>
+
+  <section>
+    <h2>Reflection Trainer</h2>
+    <button id="reflect-btn">Run Reflection</button>
+    <pre id="reflect-output"></pre>
+  </section>
+
+  <section>
+    <h2>Generate Image</h2>
+    <input id="image-prompt" placeholder="Describe an image..." />
+    <button id="gen-img-btn">Generate</button>
+    <div id="image-result"></div>
+  </section>
+
+  <section>
+    <h2>Math Solver</h2>
+    <input id="math-q" placeholder="Enter a math problem..." />
+    <button id="solve-btn">Solve</button>
+    <pre id="math-output"></pre>
+  </section>
+
+  <script src="/static/main.js"></script>
 </body>
 </html>
