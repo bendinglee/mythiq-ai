@@ -3,9 +3,9 @@ Flask-CORS==4.0.0
 gunicorn==21.2.0
 requests==2.31.0
 python-dotenv==1.0.0
-sentence-transformers==2.2.2
 faiss-cpu
 numpy
 scikit-learn
 pdfminer.six
 markdown
+sentence-transformers==2.2.2
