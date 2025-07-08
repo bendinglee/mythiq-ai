@@ -1,8 +1,5 @@
 from sentence_transformers import SentenceTransformer, util
 
-# 🔧 Clean model load using internal HF logic (no manual hf_hub_download needed)
-model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
-
 def score_answer(question, answer, source_reference):
     try:
         if not source_reference:
@@ -11,6 +8,9 @@ def score_answer(question, answer, source_reference):
                 "match": False,
                 "feedback": "No reference provided."
             }
+
+        # 🧠 Lazy load model only when needed
+        model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
 
         q_embed = model.encode(question, convert_to_tensor=True)
         a_embed = model.encode(answer, convert_to_tensor=True)
