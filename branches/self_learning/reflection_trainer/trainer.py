@@ -5,9 +5,6 @@ from branches.self_learning.reflection_trainer.vector_updater import save_new_em
 
 LOG_DB = "memory/logs.json"
 
-# 🚀 Load model using built-in SentenceTransformer logic
-model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
-
 def extract_failed_queries():
     try:
         with open(LOG_DB, "r", encoding="utf-8") as f:
@@ -40,7 +37,10 @@ def reflect_and_embed():
 
     reflections = suggest_reflections(failed)
     questions = [r["question"] for r in reflections]
-    embeddings = embed_texts(questions)
+
+    # 🧠 Lazy model load right before embedding
+    model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
+    embeddings = embed_texts(questions, model=model)
 
     updated = save_new_embeddings(reflections, embeddings)
     return {
