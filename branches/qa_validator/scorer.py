@@ -1,7 +1,15 @@
 from sentence_transformers import SentenceTransformer, util
+from huggingface_hub import hf_hub_download
+import os
 
-# ✅ Initialize model at module level
-model = SentenceTransformer("all-MiniLM-L6-v2")
+# 📥 Ensure model is downloaded cleanly without using deprecated cached_download
+MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
+MODEL_PATH = hf_hub_download(
+    repo_id=MODEL_NAME,
+    filename="config.json",
+    cache_dir="./models"  # optional: change to your preferred cache path
+)
+model = SentenceTransformer(MODEL_NAME)
 
 def score_answer(question, answer, source_reference):
     try:
@@ -12,12 +20,10 @@ def score_answer(question, answer, source_reference):
                 "feedback": "No reference provided."
             }
 
-        # ✅ Encode inputs
         q_embed = model.encode(question, convert_to_tensor=True)
         a_embed = model.encode(answer, convert_to_tensor=True)
         s_embed = model.encode(source_reference, convert_to_tensor=True)
 
-        # ✅ Compute cosine similarity
         q_a_sim = util.pytorch_cos_sim(q_embed, a_embed).item()
         a_s_sim = util.pytorch_cos_sim(a_embed, s_embed).item()
 
