@@ -1,2 +1,1 @@
-web: gunicorn main:app -w 1 --bind 0.0.0.0:$PORT --timeout 120 --max-requests 1000
-
+web: gunicorn main:app -b 0.0.0.0:8080 --timeout 120
