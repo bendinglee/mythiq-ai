@@ -1,15 +1,7 @@
 from sentence_transformers import SentenceTransformer, util
-from huggingface_hub import hf_hub_download
-import os
 
-# 📥 Ensure model is downloaded cleanly without using deprecated cached_download
-MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
-MODEL_PATH = hf_hub_download(
-    repo_id=MODEL_NAME,
-    filename="config.json",
-    cache_dir="./models"  # optional: change to your preferred cache path
-)
-model = SentenceTransformer(MODEL_NAME)
+# 🔧 Clean model load using internal HF logic (no manual hf_hub_download needed)
+model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
 
 def score_answer(question, answer, source_reference):
     try:
