@@ -1,3 +1,4 @@
+print("🔁 Initializing fallback-safe modules...")
 def init_modules(app):
     import traceback
 
