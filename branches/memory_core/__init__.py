@@ -1,7 +1,6 @@
 # 🧠 SELF-LEARNING AI BRAIN INITIALIZER
-# This starts up the learning system
 
-from .controller import memory_api
+from .routes import memory_api
 
 # Brain information
 BRANCH_NAME = "Memory Core"
@@ -20,14 +19,14 @@ CAPABILITIES = [
 
 # API endpoints
 ENDPOINTS = [
-    {"path": "/memory/learn", "method": "POST", "description": "Learn from user interactions"},
+    {"path": "/memory/log", "method": "POST", "description": "Log new memory entry"},
+    {"path": "/memory/search", "method": "GET", "description": "Search memory entries"},
     {"path": "/memory/recall", "method": "POST", "description": "Recall similar conversations"},
     {"path": "/memory/feedback", "method": "POST", "description": "Update feedback on responses"},
     {"path": "/memory/stats", "method": "GET", "description": "Get learning statistics"}
 ]
 
 def get_branch_info():
-    """Get information about this learning branch"""
     return {
         "name": BRANCH_NAME,
         "version": BRANCH_VERSION,
@@ -39,12 +38,10 @@ def get_branch_info():
     }
 
 def initialize_branch():
-    """Initialize the self-learning memory branch"""
     print(f"🧠 Initializing {BRANCH_NAME} v{BRANCH_VERSION}")
     print(f"📚 Learning capabilities: {len(CAPABILITIES)}")
     print(f"🔗 API endpoints: {len(ENDPOINTS)}")
     print("🎓 Self-learning system ready!")
     return True
 
-# Export everything
-__all__ = ['memory_api', 'get_branch_info', 'initialize_branch']
+__all__ = ["memory_api", "get_branch_info", "initialize_branch"]
