@@ -1,7 +1,32 @@
 {
-  "math": ["solve", "calculate", "equation", "x =", "find x", "+", "-", "*", "/", "="],
-  "image": ["generate image", "draw", "picture of", "visualize", "create art", "make a graphic"],
-  "knowledge": ["what is", "who is", "define", "tell me about", "explain", "where is", "when did", "who was"],
-  "code": ["write code", "python function", "script", "bug", "error", "debug", "fix this", "for loop"],
-  "chat": ["hi", "hello", "how are you", "i feel", "joke", "fun fact", "thanks"]
+  "math": [
+    "solve", "calculate", "equation", "x =", "find x", "+", "-", "*", "/", "=", "log", "sqrt", "simplify", "algebra"
+  ],
+  "image": [
+    "generate image", "draw", "picture of", "visualize", "create art", "make a graphic", "stylize this", "render", "synthesize image"
+  ],
+  "knowledge": [
+    "what is", "who is", "define", "tell me about", "explain", "where is", "when did", "who was", "general knowledge", "fact"
+  ],
+  "code": [
+    "write code", "python function", "script", "bug", "error", "debug", "fix this", "for loop", "flask", "html", "api route"
+  ],
+  "chat": [
+    "hi", "hello", "how are you", "i feel", "joke", "fun fact", "thanks", "talk", "conversation", "tell me something"
+  ],
+  "feedback": [
+    "correct this", "wrong answer", "update response", "feedback", "was incorrect", "improve", "reflection", "learn from this"
+  ],
+  "docs": [
+    "upload document", "ingest file", "read this", "parse text", "load doc", "knowledge base", "vectorize", "store document"
+  ],
+  "synth": [
+    "enhance image", "synthesize", "post-process", "filter image", "apply style", "image refinement"
+  ],
+  "reflection": [
+    "generate summary", "feedback report", "what did mythiq learn", "reflection score", "self-learning", "introspection"
+  ],
+  "fallback_core": [
+    "unknown", "uncertain", "low confidence", "not sure", "unsure intent"
+  ]
 }
