@@ -1,3 +1,12 @@
+import requests
+import traceback
+import xml.etree.ElementTree as ET
+from flask import request
+from branches.self_learning.log import log_entry
+import os
+
+WOLFRAM_APP_ID = os.getenv("WOLFRAM_APP_ID")
+
 def solve_math_query(raw_input):
     original = raw_input.strip()
     cleaned = original.lower().replace("^", "**").replace(" ", "")
@@ -42,7 +51,6 @@ def solve_math_query(raw_input):
                         log_entry(request)
 
                     return {"success": True, "result": result}
-                # If no match yet, save the first valid pod as fallback
                 if fallback_text is None:
                     fallback_text = text
 
