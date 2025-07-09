@@ -1,43 +1,28 @@
-from flask import request, jsonify
-from branches.intent_router.classifier import classify_intent
-from branches.general_knowledge.query import answer_general_knowledge
-from branches.math_solver.solver import solve_math_query
-from branches.self_learning.log import log_entry
+from branches.feedback_reactor.controller import update_with_feedback
+from branches.uncertainty_detector.analyzer import assess_uncertainty
 
-def dispatch_input(req):
-    data = req.get_json()
-    q = data.get("input", "").strip()
+def dispatch_input(request):
+    data = request.get_json()
+    query = data.get("question", "")
 
-    intent_response = classify_intent_from_text(q)
-    intent = intent_response.get("intent", "chat")
-    output = ""
+    intent = detect_intent(query)
+    response = route_to_module(intent, query)
 
-    if intent == "math":
-        result = solve_math_query(q)
-        output = result.get("result") or result.get("error")
+    # Assess confidence
+    confidence_result = assess_uncertainty(response)
 
-    elif intent == "knowledge":
-        result = answer_general_knowledge(req)
-        data = result.get_json()
-        output = data.get("answer") or "No answer found."
-
+    if confidence_result["is_uncertain"]:
+        print("[DISPATCH] Low confidence detected — enabling fallback")
+        # Trigger fallback module (e.g., general_knowledge or reflect route)
+        fallback_response = fallback_router(query)
+        # Log feedback entry for long-term memory
+        update_with_feedback({
+            "input": query,
+            "output": response.get("output", ""),
+            "user_feedback": "Uncertain response detected",
+            "tags": [intent],
+            "confidence": confidence_result["confidence_score"]
+        })
+        return fallback_response
     else:
-        output = "🤖 I'm still learning. Try math or knowledge queries."
-
-    # Memory log
-    log_payload = {
-        "input": q,
-        "output": output,
-        "tags": [intent],
-        "success": True,
-        "meta": {"source": "dispatch"}
-    }
-    with req.app.test_request_context(json=log_payload):
-        log_entry(req)
-
-    return jsonify({"success": True, "intent": intent, "reply": output})
-
-def classify_intent_from_text(text):
-    with request.app.test_request_context(query_string={"q": text}):
-        res = classify_intent(request)
-        return res.get_json()
+        return response
