@@ -1,13 +1,24 @@
-from .classifier import detect_intent
-from .rules import load_route_rules
+from flask import Blueprint, request, jsonify
+from branches.intent_router.router import route_input
+from branches.intent_router.fallback import fallback_to_uncertainty
 
-def route_input(text):
-    intent = detect_intent(text)
-    rules = load_route_rules()
+intent_api = Blueprint("intent_router", __name__)
 
-    route = rules.get(intent, "fallback_core")
-    return {
-        "intent": intent,
-        "route": route,
-        "confidence": 0.85 if route != "fallback_core" else 0.3
-    }
+@intent_api.route("/api/intent-route", methods=["POST"])
+def intent_route():
+    try:
+        data = request.get_json()
+        text = data.get("text", "").strip()
+
+        if not text:
+            return jsonify({ "success": False, "error": "No input provided." }), 400
+
+        result = route_input(text)
+
+        if result["confidence"] < 0.5:
+            return jsonify(fallback_to_uncertainty(text))
+
+        return jsonify({ "success": True, **result })
+
+    except Exception as e:
+        return jsonify({ "success": False, "error": str(e) }), 500
