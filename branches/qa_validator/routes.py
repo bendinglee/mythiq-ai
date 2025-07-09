@@ -1,17 +1,20 @@
-from flask import request, jsonify
-from branches.qa_validator.scorer import score_answer
-from branches.qa_validator.gradebook import log_score
+from flask import Blueprint, request, jsonify
+from branches.qa_validator.scorer import score_response
+from branches.qa_validator.gradebook import log_grade
 
-def validate_answer_route():
+qa_api = Blueprint("qa_validator", __name__)
+
+@qa_api.route("/api/qa-grade", methods=["POST"])
+def grade_answer():
     try:
-        data = request.get_json()
-        question = data.get("question", "")
-        answer = data.get("answer", "")
-        source = data.get("source", "")
+        payload = request.get_json()
+        if not payload.get("input") or not payload.get("output"):
+            return jsonify({ "success": False, "error": "Missing input or output." }), 400
 
-        score = score_answer(question, answer, source)
-        log_score(question, answer, score)
+        result = score_response(payload)
+        log_grade(payload, result)
 
-        return jsonify({ "success": True, "score": score })
+        return jsonify({ "success": True, **result })
+
     except Exception as e:
         return jsonify({ "success": False, "error": str(e) }), 500
