@@ -1,0 +1,22 @@
+{
+  "default": {
+    "description": "Standard synthesis with enhanced clarity",
+    "tags": ["balanced", "neutral"]
+  },
+  "vibrant": {
+    "description": "Boosts saturation, contrast, and warmth",
+    "tags": ["colorful", "high-energy"]
+  },
+  "noir": {
+    "description": "Monochrome with dramatic lighting",
+    "tags": ["black-and-white", "cinematic"]
+  },
+  "dreamlike": {
+    "description": "Soft blur, surreal hue shifts",
+    "tags": ["ethereal", "fantasy"]
+  },
+  "sketch": {
+    "description": "Line-art effect with reduced color",
+    "tags": ["hand-drawn", "minimal"]
+  }
+}
