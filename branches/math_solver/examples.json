@@ -1,4 +1,9 @@
 [
-  { "question": "solve x^2 + 4x + 4 = 0", "expected": "x = -2" },
-  { "question": "solve 2x + 5 = 15", "expected": "x = 5" }
+  { "question": "2x + 5 = 13", "label": "Solve for x" },
+  { "question": "x^2 - 4 = 0", "label": "Quadratic roots" },
+  { "question": "3x + 2x = 10", "label": "Combine like terms" },
+  { "question": "sin(x) = 0.5", "label": "Trigonometric solution" },
+  { "question": "derivative of x^2", "label": "Differentiation" },
+  { "question": "integrate x dx", "label": "Integration" },
+  { "question": "limit of (x^2 - 4)/(x - 2) as x → 2", "label": "Limits" }
 ]
