@@ -1,38 +1,30 @@
-from sentence_transformers import SentenceTransformer, util
+def score_response(entry):
+    input_text = entry.get("input", "").lower()
+    output_text = entry.get("output", "").lower()
 
-def score_answer(question, answer, source_reference):
-    try:
-        if not source_reference:
-            return {
-                "confidence": 0,
-                "match": False,
-                "feedback": "No reference provided."
-            }
+    score = 0.0
+    feedback = []
 
-        # 🧠 Lazy load model only when needed
-        model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
+    if any(kw in output_text for kw in ["correct", "accurate", "true"]):
+        score += 0.3
+        feedback.append("✅ Appears factually accurate.")
 
-        q_embed = model.encode(question, convert_to_tensor=True)
-        a_embed = model.encode(answer, convert_to_tensor=True)
-        s_embed = model.encode(source_reference, convert_to_tensor=True)
+    if len(output_text) > 80:
+        score += 0.2
+        feedback.append("🧠 Response length is appropriate.")
 
-        q_a_sim = util.pytorch_cos_sim(q_embed, a_embed).item()
-        a_s_sim = util.pytorch_cos_sim(a_embed, s_embed).item()
+    if "i don't know" in output_text or "unsure":
+        score -= 0.2
+        feedback.append("⚠️ Uncertainty detected.")
 
-        match = q_a_sim > 0.6 and a_s_sim > 0.7
-        confidence = round((q_a_sim + a_s_sim) / 2, 3)
+    if "thank you" in output_text or "you’re welcome" in output_text:
+        score += 0.1
+        feedback.append("🙂 Friendly tone detected.")
 
-        return {
-            "confidence": confidence,
-            "match": match,
-            "similarity_to_question": round(q_a_sim, 3),
-            "similarity_to_source": round(a_s_sim, 3),
-            "feedback": "Answer matches source." if match else "Possible mismatch or hallucination."
-        }
+    score += min(0.4, len(entry.get("tags", [])) * 0.05)
 
-    except Exception as e:
-        return {
-            "confidence": 0,
-            "match": False,
-            "feedback": f"Error during scoring: {e}"
-        }
+    return {
+        "score": round(score, 2),
+        "feedback": feedback,
+        "tags": entry.get("tags", [])
+    }
