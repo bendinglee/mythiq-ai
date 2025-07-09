@@ -39,6 +39,8 @@ try:
     from branches.qa_validator.routes import validate_answer_route
     from branches.seo_master.routes import optimize_keywords_route
     from branches.self_learning.reflection_trainer.trainer_route import reflect_logs_route
+    from branches.image_synth.routes import image_api  # 🔥 New image_synth branch
+    app.register_blueprint(image_api)  # 🔗 Inject image_synth blueprint
     print("✅ Core route modules loaded.")
 except Exception as e:
     print("❌ Core import failed:", traceback.format_exc())
