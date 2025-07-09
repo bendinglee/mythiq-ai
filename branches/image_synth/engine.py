@@ -1,22 +1,52 @@
-import requests
-import os
+import requests, os, uuid, re
 
 HF_TOKEN = os.getenv("HF_TOKEN")
+HF_MODEL = "stabilityai/stable-diffusion-2"
+HF_URL = f"https://api-inference.huggingface.co/models/{HF_MODEL}"
 
-def generate_image_from_prompt(prompt):
-    # HuggingFace Inference API (Stable Diffusion)
-    url = "https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-2"
-    headers = {"Authorization": f"Bearer {HF_TOKEN}"}
-    payload = {"inputs": prompt}
+STATIC_PATH = "static/generated"
 
-    response = requests.post(url, headers=headers, json=payload)
+def sanitize_filename(text):
+    safe = re.sub(r"[^\w\s-]", "", text).strip().replace(" ", "_")
+    return safe[:40]
 
-    if response.status_code != 200:
-        raise Exception(f"HF request failed: {response.text}")
+def synthesize_image(prompt, modifiers=None):
+    if not prompt:
+        return { "success": False, "error": "No prompt provided." }
 
-    # Save image binary to static folder
-    img_path = f"static/generated/{prompt.replace(' ', '_')[:40]}.png"
-    with open(img_path, "wb") as f:
-        f.write(response.content)
+    headers = { "Authorization": f"Bearer {HF_TOKEN}" }
+    payload = { "inputs": prompt }
 
-    return f"/{img_path}"
+    try:
+        response = requests.post(HF_URL, headers=headers, json=payload)
+
+        if response.status_code != 200 or "image" not in response.headers.get("content-type", ""):
+            return {
+                "success": False,
+                "error": f"HF request failed: {response.text}",
+                "style_applied": modifiers or "default"
+            }
+
+        # 🔐 Ensure static folder exists
+        os.makedirs(STATIC_PATH, exist_ok=True)
+
+        # 🖼️ Save image using UUID to avoid collisions
+        file_id = str(uuid.uuid4())[:8]
+        filename = f"{sanitize_filename(prompt)}_{file_id}.png"
+        img_path = os.path.join(STATIC_PATH, filename)
+
+        with open(img_path, "wb") as f:
+            f.write(response.content)
+
+        return {
+            "success": True,
+            "synth_url": f"/{img_path}",
+            "style_applied": modifiers or "default"
+        }
+
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e),
+            "style_applied": modifiers or "default"
+        }
