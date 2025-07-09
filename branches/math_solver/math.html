@@ -1,20 +1,77 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>🧠 Mythiq Math Solver</title>
+  <meta charset="UTF-8" />
+  <title>🧠 Mythiq AI Math Solver</title>
   <script src="/static/main.js" defer></script>
   <style>
-    body { font-family: sans-serif; padding: 2rem; background: #111; color: #eee; }
-    input, button { padding: 0.5rem; font-size: 1rem; }
-    #math-output { margin-top: 1rem; font-weight: bold; }
+    body {
+      font-family: system-ui, sans-serif;
+      padding: 2rem;
+      background: #111;
+      color: #eee;
+      line-height: 1.6;
+    }
+    h2, h3 { margin-top: 0; }
+    input, button {
+      padding: 0.5rem;
+      font-size: 1rem;
+      border: none;
+      border-radius: 4px;
+    }
+    input {
+      width: 300px;
+      background: #222;
+      color: #eee;
+    }
+    button {
+      background-color: #4caf50;
+      color: white;
+      cursor: pointer;
+      margin-left: 0.5rem;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    form.solving button {
+      opacity: 0.6;
+      pointer-events: none;
+    }
+    #math-output {
+      margin-top: 1rem;
+      font-weight: bold;
+      background: #222;
+      padding: 1rem;
+      border-radius: 6px;
+    }
+    ul#math-history {
+      list-style: none;
+      padding-left: 0;
+      margin-top: 1rem;
+    }
+    ul#math-history li {
+      margin-bottom: 0.5rem;
+      background: #1a1a1a;
+      padding: 0.5rem;
+      border-left: 4px solid #4caf50;
+    }
+    code {
+      background: #333;
+      padding: 2px 4px;
+      border-radius: 3px;
+    }
   </style>
 </head>
 <body>
   <h2>➗ Mythiq AI Math Solver</h2>
   <form id="math-form">
-    <input type="text" id="math-question" placeholder="e.g. 2x + 5 = 13" size="40" />
+    <input type="text" id="math-question" placeholder="e.g. 2x + 5 = 13" />
     <button type="submit">Solve</button>
   </form>
+
   <div id="math-output">Awaiting input...</div>
+
+  <h3>🧾 Previous Queries</h3>
+  <ul id="math-history"></ul>
 </body>
 </html>
