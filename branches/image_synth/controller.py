@@ -1,21 +1,18 @@
-from flask import request, jsonify
-from .engine import generate_image_from_prompt
-from .memory_writer import save_image_log
+from branches.image_synth.engine import synthesize_image
+from branches.image_synth.memory_writer import log_synth_output
 
-def synthesize_image_route():
-    data = request.get_json()
-    prompt = data.get("prompt", "").strip()
+def process_image_synthesis(prompt, modifiers=None):
+    # 🖼️ Run synthesis via engine (e.g. upscaling, filtering)
+    result = synthesize_image(prompt, modifiers)
 
-    if not prompt:
-        return jsonify({"success": False, "error": "No prompt provided."}), 400
+    # 🧠 Log result to memory
+    log_synth_output(prompt, result, modifiers)
 
-    try:
-        image_url = generate_image_from_prompt(prompt)
-        save_image_log(prompt, image_url)
-        return jsonify({
-            "success": True,
-            "prompt": prompt,
-            "image_url": image_url
-        })
-    except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 500
+    # ✅ Return standardized response object
+    return {
+        "success": result.get("success", False),
+        "prompt": prompt,
+        "synth_url": result.get("synth_url", ""),
+        "style_applied": result.get("style_applied", "default"),
+        "message": "Image synthesis complete." if result.get("success") else "Image synthesis failed."
+    }
