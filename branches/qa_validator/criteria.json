@@ -1,0 +1,7 @@
+{
+  "length_weight": 0.2,
+  "accuracy_weight": 0.3,
+  "tone_weight": 0.1,
+  "tag_weight_per_item": 0.05,
+  "max_tag_bonus": 0.4
+}
