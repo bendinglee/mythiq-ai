@@ -1,0 +1,30 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "MemoryLogEntry",
+  "type": "object",
+  "properties": {
+    "id": { "type": "string" },
+    "input": { "type": "string" },
+    "output": { "type": "string" },
+    "tags": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "success": { "type": "boolean" },
+    "meta": {
+      "type": "object",
+      "properties": {
+        "timestamp": { "type": "string", "format": "date-time" },
+        "source": { "type": "string" },
+        "cleaned_input": { "type": "string" },
+        "related_ids": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "score": { "type": "number" },
+        "reflection_weight": { "type": "number" }
+      }
+    }
+  },
+  "required": ["input", "output", "success", "meta"]
+}
