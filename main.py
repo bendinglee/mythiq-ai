@@ -16,7 +16,7 @@ print("WOLFRAM_APP_ID present:", bool(WOLFRAM_APP_ID))
 # ✅ Initialize Flask app
 app = Flask(__name__, static_url_path='/static')
 
-# 🧠 Fallback-safe route injection
+# 🔁 Fallback-safe dynamic injection
 print("🔁 Importing fallback-safe modules...")
 try:
     from branches import init_modules
@@ -24,7 +24,7 @@ try:
 except Exception as e:
     print("❌ Error loading dynamic modules:", traceback.format_exc())
 
-# ✅ Core functional routes (non-optional)
+# ✅ Static route imports
 try:
     from branches.math_solver.solver import solve_math_query
     from branches.doc_ingestor.routes import load_docs_route
@@ -39,8 +39,10 @@ try:
     from branches.qa_validator.routes import validate_answer_route
     from branches.seo_master.routes import optimize_keywords_route
     from branches.self_learning.reflection_trainer.trainer_route import reflect_logs_route
-    from branches.image_synth.routes import image_api  # 🔥 New image_synth branch
-    app.register_blueprint(image_api)  # 🔗 Inject image_synth blueprint
+    from branches.image_synth.routes import image_api
+    from branches.visual_gallery.routes import gallery_api
+    app.register_blueprint(image_api)
+    app.register_blueprint(gallery_api)
     print("✅ Core route modules loaded.")
 except Exception as e:
     print("❌ Core import failed:", traceback.format_exc())
@@ -109,27 +111,11 @@ def validate_answer():
 def optimize_keywords():
     return optimize_keywords_route()
 
-@app.route("/gallery")
-def gallery():
-    try:
-        with open("memory/image_logs.json", "r", encoding="utf-8") as f:
-            logs = json.load(f)
-        html = "<h2>🖼️ Mythiq Gallery</h2><div style='display:grid;gap:20px;'>"
-        for entry in reversed(logs[-50:]):
-            prompt = entry.get("crafted_prompt", entry.get("input_prompt", ""))
-            img = entry.get("image_url", "")
-            html += f"<div><img src='{img}' style='max-width:100%;border-radius:8px;'/><p>{prompt}</p></div>"
-        html += "</div>"
-        return html
-    except Exception as e:
-        print("❌ Gallery read error:", e)
-        return f"<h2>Error loading gallery:</h2><pre>{e}</pre>"
-
 @app.route("/")
 def index():
     return render_template("index.html")
 
-# ✅ Final boot confirmation before starting server
+# ✅ Boot confirmation
 print("✅ Reached end of main.py — launching Flask...")
 
 if __name__ == "__main__":
