@@ -1,31 +1,35 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Mythiq UI</title>
+  <meta charset="UTF-8" />
+  <title>Mythiq AI</title>
   <link rel="stylesheet" href="/static/styles.css" />
 </head>
 <body>
-  <h1>🧠 Mythiq AI Interface</h1>
+  <aside id="sidebar">
+    <h2>🧠 Mythiq AI</h2>
+    <nav>
+      <button class="nav-btn active" data-mode="chat">💬 Chat</button>
+      <button class="nav-btn" data-mode="math">➗ Math</button>
+      <button class="nav-btn" data-mode="image">🖼 Image Gen</button>
+      <button class="nav-btn" data-mode="reflect">🧠 Reflection</button>
+    </nav>
 
-  <section>
-    <h2>Reflection Trainer</h2>
-    <button id="reflect-btn">Run Reflection</button>
-    <pre id="reflect-output"></pre>
-  </section>
+    <div id="memory-section">
+      <h4>🗂️ Memory Snapshot</h4>
+      <ul id="memory-list">
+        <li>Loading...</li>
+      </ul>
+    </div>
+  </aside>
 
-  <section>
-    <h2>Generate Image</h2>
-    <input id="image-prompt" placeholder="Describe an image..." />
-    <button id="gen-img-btn">Generate</button>
-    <div id="image-result"></div>
-  </section>
-
-  <section>
-    <h2>Math Solver</h2>
-    <input id="math-q" placeholder="Enter a math problem..." />
-    <button id="solve-btn">Solve</button>
-    <pre id="math-output"></pre>
-  </section>
+  <main id="main-panel">
+    <div id="chat-log"></div>
+    <div id="input-bar">
+      <input id="user-input" placeholder="Ask Mythiq..." />
+      <button id="send-btn">Send</button>
+    </div>
+  </main>
 
   <script src="/static/main.js"></script>
 </body>
