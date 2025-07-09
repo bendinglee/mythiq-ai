@@ -34,6 +34,37 @@ body {
   color: #00e5ff;
 }
 
+.nav-btn.active {
+  color: #00e5ff;
+  font-weight: bold;
+}
+
+#memory-section {
+  margin-top: 2rem;
+  border-top: 1px solid #1f2937;
+  padding-top: 1rem;
+}
+
+#memory-section h4 {
+  font-size: 0.9rem;
+  color: #00e5ff;
+  margin-bottom: 0.5rem;
+}
+
+#memory-list {
+  list-style: none;
+  padding: 0;
+  font-size: 0.85rem;
+  color: #b2dfdb;
+}
+
+#memory-list li {
+  margin-bottom: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 #main-panel {
   flex-grow: 1;
   display: flex;
