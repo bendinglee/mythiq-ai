@@ -1,11 +1,19 @@
 from branches.general_knowledge.loader import get_knowledge
-from flask import jsonify
 
 def answer_general_knowledge(request):
-    q = request.args.get("q", "").strip().lower()
+    # 🔍 Handle both direct query and dispatcher input formats
+    if isinstance(request, dict):
+        q = request.get("args", {}).get("q", "").strip().lower()
+    else:
+        q = request.args.get("q", "").strip().lower()
+
+    # 🧠 Get matched answer from loaded knowledge base
     answer = get_knowledge(q)
 
-    return jsonify({
+    # 🧾 Return structured response
+    return {
         "success": True if answer else False,
-        "answer": answer or "🤖 I couldn't find an answer to that yet."
-    })
+        "output": answer or "🤖 I couldn't find an answer to that yet.",
+        "confidence": 0.9 if answer else 0.4,
+        "tags": ["general_knowledge"]
+    }
