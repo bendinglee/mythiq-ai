@@ -1,108 +1,29 @@
-# This is the Python part of your main.py, before the HTML string
-# ... (your existing Flask imports and app setup) ...
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Mythiq AI</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <aside id="sidebar">
+    <h2>🧠 Mythiq AI</h2>
+    <nav>
+      <button class="nav-btn" data-mode="chat">💬 Chat</button>
+      <button class="nav-btn" data-mode="math">➗ Math</button>
+      <button class="nav-btn" data-mode="image">🖼 Image Gen</button>
+      <button class="nav-btn" data-mode="reflect">🧠 Reflection</button>
+    </nav>
+  </aside>
 
-@app.route('/')
-def index():
-    return '''
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <title>MYTHIQ.AI</title>
-        <style>
-            /* ... your existing CSS ... */
-        </style>
-    </head>
-    <body>
-        <div class="chat-container">
-            <div class="chat-box" id="chat-box">
-                <!-- Chat messages will appear here -->
-            </div>
-            <input type="text" id="user-input" placeholder="Type your message...">
-        </div>
+  <main id="main-panel">
+    <div id="chat-log"></div>
+    <div id="input-bar">
+      <input id="user-input" placeholder="Ask Mythiq..." />
+      <button id="send-btn">Send</button>
+    </div>
+  </main>
 
-        <script>
-            // Helper function to display messages in the chat box
-            function displayMessage(message, sender) {
-                const chatBox = document.getElementById('chat-box');
-                const messageElement = document.createElement('div');
-                messageElement.classList.add('chat-message', sender);
-                messageElement.innerHTML = message; // Use innerHTML to render bold/emojis
-                chatBox.appendChild(messageElement);
-                chatBox.scrollTop = chatBox.scrollHeight; // Auto-scroll to bottom
-            }
-
-            function displayUserMessage(message) {
-                displayMessage(message, 'user');
-            }
-
-            function displayBotMessage(message) {
-                displayMessage(message, 'bot');
-            }
-
-            // Function to detect if a query is a math problem
-            function isMathQuery(query) {
-                const lowerQuery = query.toLowerCase();
-                // Simple regex to detect common math operations or keywords
-                return /[0-9+\-*/=^()]/.test(lowerQuery) ||
-                       lowerQuery.includes('solve') ||
-                       lowerQuery.includes('calculate') ||
-                       lowerQuery.includes('math') ||
-                       lowerQuery.includes('derivative') ||
-                       lowerQuery.includes('integral');
-            }
-
-            // 🧮 WORKING MATH SOLVER CONNECTION - NEW CODE STARTS HERE
-            async function solveMathProblem(question) {
-                try {
-                    const response = await fetch("/api/solve-math", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ question: question })
-                    });
-                    
-                    const data = await response.json();
-                    if (data.success) {
-                        return `🧮 **Solution:** ${data.result}`;
-                    } else {
-                        // If backend returns an error, display it
-                        return `❌ **Error:** ${data.error || "An unknown error occurred"}`;
-                    }
-                } catch (error) {
-                    // Catch network errors or issues reaching the backend
-                    console.error("Math solver fetch error:", error);
-                    return `❌ **Connection Error:** Could not reach math solver. Please check server logs.`;
-                }
-            }
-            // 🧮 WORKING MATH SOLVER CONNECTION - NEW CODE ENDS HERE
-
-            // Event listener for user input
-            document.getElementById('user-input').addEventListener('keypress', async function(e) {
-                if (e.key === 'Enter') {
-                    const userInput = this.value;
-                    if (userInput.trim() === '') return;
-
-                    displayUserMessage(userInput);
-                    this.value = ''; // Clear input field
-
-                    // Check if it's a math query
-                    if (isMathQuery(userInput)) {
-                        displayBotMessage("🧮 Solving..."); // Show a "solving" message
-                        const solution = await solveMathProblem(userInput);
-                        displayBotMessage(solution);
-                        return; // Stop further processing for math queries
-                    }
-
-                    // --- Existing chat/knowledge handling (if any) would go here ---
-                    // For now, a generic response if not math
-                    displayBotMessage("I'm not sure how to respond to that yet. Try a math problem!");
-                }
-            });
-
-            // Initial welcome message
-            window.onload = function() {
-                displayBotMessage("Hello! I'm MYTHIQ.AI. How can I help you today?");
-            };
-        </script>
-    </body>
-    </html>
-    '''
+  <script src="/static/main.js"></script>
+</body>
+</html>
