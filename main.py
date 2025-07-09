@@ -35,6 +35,10 @@ try:
     from branches.self_learning.recall import retrieve_entries
     from branches.self_learning.reflect import reflect_summary
     from branches.core_router.dispatcher import dispatch_input
+    from branches.image_generator.routes import generate_image_route
+    from branches.qa_validator.routes import validate_answer_route
+    from branches.seo_master.routes import optimize_keywords_route
+    from branches.self_learning.reflection_trainer.trainer_route import reflect_logs_route
     print("✅ Core route modules loaded.")
 except Exception as e:
     print("❌ Core import failed:", traceback.format_exc())
@@ -52,7 +56,7 @@ def solve_math():
         result = solve_math_query(data.get("question", ""))
         return jsonify({"success": True, "result": result})
     except Exception as e:
-        print("❌ Math route error:", e)
+        print("❌ Math route error:", traceback.format_exc())
         return jsonify({"success": False, "error": str(e)}), 500
 
 @app.route("/api/query-knowledge", methods=["GET"])
