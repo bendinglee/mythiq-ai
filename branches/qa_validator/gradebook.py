@@ -1,25 +1,22 @@
-import os, json
-from datetime import datetime
+import json, os, datetime, uuid
 
-SCORE_FILE = "memory/qa_scores.json"
+GRADE_LOG = "memory/qa_grades.json"
 
-def log_score(question, answer, score_obj):
-    os.makedirs("memory", exist_ok=True)
-
-    entry = {
-        "timestamp": datetime.now().isoformat(),
-        "question": question,
-        "answer": answer,
-        "score": score_obj
+def log_grade(entry, result):
+    grade = {
+        "id": str(uuid.uuid4()),
+        "timestamp": datetime.datetime.utcnow().isoformat() + "Z",
+        "input": entry.get("input"),
+        "output": entry.get("output"),
+        "score": result.get("score", 0.0),
+        "feedback": result.get("feedback", []),
+        "tags": result.get("tags", [])
     }
 
-    if os.path.exists(SCORE_FILE):
-        with open(SCORE_FILE, "r", encoding="utf-8") as f:
-            history = json.load(f)
-    else:
-        history = []
+    if not os.path.exists(GRADE_LOG):
+        with open(GRADE_LOG, "w") as f: json.dump([], f)
 
-    history.append(entry)
+    with open(GRADE_LOG, "r") as f: logs = json.load(f)
+    logs.append(grade)
 
-    with open(SCORE_FILE, "w", encoding="utf-8") as f:
-        json.dump(history, f, indent=2)
+    with open(GRADE_LOG, "w") as f: json.dump(logs, f, indent=2)
