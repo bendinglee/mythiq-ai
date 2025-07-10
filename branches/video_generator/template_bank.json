@@ -1,0 +1,5 @@
+[
+  { "style": "cinematic", "fps": 24, "transition": "fade" },
+  { "style": "explainer", "fps": 30, "transition": "slide" },
+  { "style": "looping", "fps": 25, "transition": "zoom" }
+]
