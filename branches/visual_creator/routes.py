@@ -17,4 +17,4 @@ def create_visual():
         result = create_visual_asset(prompt, style, overlay)
         return jsonify(result)
     except Exception as e:
-        return jsonify({ "success": False, "error": str(e) }), 500
+        return jsonify({ "success": False, "error": f"Visual creation failed: {str(e)}" }), 500
