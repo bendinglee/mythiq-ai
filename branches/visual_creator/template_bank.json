@@ -1,5 +1,6 @@
 [
-  { "style": "cyberpunk", "filters": ["neon", "contrast"], "overlay": "title" },
-  { "style": "minimalist", "filters": ["grayscale"], "overlay": "none" },
-  { "style": "fantasy", "filters": ["glow", "soft"], "overlay": "caption" }
+  { "style": "default", "filters": [], "overlay": "none" },
+  { "style": "cyberpunk", "filters": ["neon", "contrast"], "overlay": "caption" },
+  { "style": "minimalist", "filters": ["grayscale", "clean"], "overlay": "none" },
+  { "style": "fantasy", "filters": ["glow", "soft-focus"], "overlay": "title" }
 ]
