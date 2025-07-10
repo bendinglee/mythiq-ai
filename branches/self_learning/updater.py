@@ -51,4 +51,7 @@ def merge_feedback_into_memory():
 
     return {
         "success": True,
-        "updated_count": len(updated_entries
+        "updated_count": len(updated_entries),
+        "feedback_ids": [entry.get("meta", {}).get("feedback_ids", []) for entry in updated_entries],
+        "updated_prompts": [entry.get("input") for entry in updated_entries]
+    }
