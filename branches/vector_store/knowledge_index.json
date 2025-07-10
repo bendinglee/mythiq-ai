@@ -1,5 +1,4 @@
 [
   { "id": 0, "text": "What is AI?" },
-  { "id": 1, "text": "Explain Newton's laws." },
-  ...
+  { "id": 1, "text": "Explain Newton's laws." }
 ]
