@@ -1,19 +1,22 @@
-def detect_common_failure_patterns(query):
+def detect_and_rewrite_failed_query(query):
     query = query.strip().lower()
-    hints = []
+    suggestions = []
+    fixed = query
 
-    if "solve for" not in query and "=" in query:
-        hints.append("Add 'solve for x' for better detection.")
-
-    if not any(op in query for op in ["+", "-", "*", "/", "="]):
-        hints.append("Query lacks operators — try a complete expression.")
+    if "=" in query and "solve for" not in query:
+        fixed += " solve for x"
+        suggestions.append("🔁 Added 'solve for x' to clarify equation.")
 
     if "^" in query and "**" not in query:
-        hints.append("Replace '^' with '**' for exponent parsing.")
+        fixed = fixed.replace("^", "**")
+        suggestions.append("🔁 Replaced '^' with '**' for exponent syntax.")
+
+    if not any(op in query for op in ["+", "-", "*", "/", "="]):
+        suggestions.append("⚠️ Query may lack mathematical operators.")
 
     return {
-        "success": False,
-        "error": "⚠️ Query format unclear or unsupported.",
-        "hints": hints,
-        "suggested_fix": query.replace("^", "**") + " for x" if "=" in query else None
+        "success": True,
+        "original": query,
+        "rewritten": fixed.strip(),
+        "hints": suggestions or ["✅ Format appears acceptable."]
     }
