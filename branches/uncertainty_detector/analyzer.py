@@ -1,14 +1,36 @@
+import json, os, re
+
+PHRASE_DB = os.path.join(os.path.dirname(__file__), "phrase_bank.json")
+
+def load_uncertainty_phrases():
+    """Load hedge/vague phrases from phrase bank."""
+    if not os.path.exists(PHRASE_DB):
+        return []
+    try:
+        with open(PHRASE_DB, "r", encoding="utf-8") as f:
+            phrases = json.load(f)
+            return [p.strip().lower() for p in phrases if isinstance(p, str)]
+    except Exception as e:
+        print(f"[Analyzer] Failed to load phrase bank: {e}")
+        return []
+
 def assess_uncertainty(response_obj):
+    """Detect uncertainty markers and return confidence status."""
     output = response_obj.get("output", "")
-    confidence = response_obj.get("confidence", 1.0)
+    confidence = float(response_obj.get("confidence", 1.0))
 
-    # Define thresholds
-    uncertain_phrases = ["I don't know", "not sure", "can't answer", "unknown", "no data"]
-    low_confidence = confidence < 0.6
+    normalized = output.lower()
+    phrases = load_uncertainty_phrases()
 
-    matches_uncertain = any(p in output.lower() for p in uncertain_phrases)
+    matched = []
+    for phrase in phrases:
+        if re.search(r"\b" + re.escape(phrase) + r"\b", normalized):
+            matched.append(phrase)
+
+    is_uncertain = bool(matched) or confidence < 0.6
 
     return {
-        "is_uncertain": matches_uncertain or low_confidence,
-        "confidence_score": confidence
+        "is_uncertain": is_uncertain,
+        "confidence_score": round(confidence, 2),
+        "matched_phrases": matched
     }
