@@ -1,19 +1,21 @@
 from branches.math_solver.solver import solve_math_query
 
-def test_basic_equation():
-    result = solve_math_query("2x + 5 = 13")
-    assert result["success"] and "4" in result["result"], f"Unexpected result: {result}"
+def run_tests():
+    tests = {
+        "2x + 5 = 13": "x = 4",
+        "x^2 - 4 = 0": "x = ±2",
+        "sin(x) = 0.5": "x ≈ 30° or x ≈ π/6",
+        "unknownsymbol$": None
+    }
 
-def test_trig_expression():
-    result = solve_math_query("sin(x) = 0.5")
-    assert result["success"], "Trig test failed"
+    for query, expected in tests.items():
+        result = solve_math_query(query)
+        if expected:
+            assert result["success"] and expected.lower() in result["result"].lower(), f"Test failed for: {query}"
+        else:
+            assert not result["success"], f"Unexpected success for: {query}"
 
-def test_bad_input_handling():
-    result = solve_math_query("unknownsymbol$")
-    assert not result["success"], "Should fail on bad input"
+    print("✅ All math solver tests passed.")
 
 if __name__ == "__main__":
-    test_basic_equation()
-    test_trig_expression()
-    test_bad_input_handling()
-    print("✅ All tests passed.")
+    run_tests()
