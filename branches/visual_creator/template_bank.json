@@ -1,0 +1,5 @@
+[
+  { "style": "cyberpunk", "filters": ["neon", "contrast"], "overlay": "title" },
+  { "style": "minimalist", "filters": ["grayscale"], "overlay": "none" },
+  { "style": "fantasy", "filters": ["glow", "soft"], "overlay": "caption" }
+]
