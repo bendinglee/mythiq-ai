@@ -1,9 +1,8 @@
 [
-  { "question": "2x + 5 = 13", "label": "Solve for x" },
-  { "question": "x^2 - 4 = 0", "label": "Quadratic roots" },
-  { "question": "3x + 2x = 10", "label": "Combine like terms" },
-  { "question": "sin(x) = 0.5", "label": "Trigonometric solution" },
+  { "question": "2x + 5 = 13", "label": "Linear equation" },
+  { "question": "x^2 - 4 = 0", "label": "Quadratic equation" },
+  { "question": "sin(x) = 0.5", "label": "Trigonometric identity" },
   { "question": "derivative of x^2", "label": "Differentiation" },
   { "question": "integrate x dx", "label": "Integration" },
-  { "question": "limit of (x^2 - 4)/(x - 2) as x → 2", "label": "Limits" }
+  { "question": "limit of (x^2 - 1)/(x - 1) as x→1", "label": "Limit evaluation" }
 ]
