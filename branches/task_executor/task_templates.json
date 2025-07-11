@@ -1,0 +1,7 @@
+{
+  "templates": {
+    "reminder": "🔔 Don't forget: {content}",
+    "checklist": "✅ Your checklist:",
+    "summary": "🧠 Here's a brief summary:"
+  }
+}
