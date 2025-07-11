@@ -1,0 +1,8 @@
+[
+  { "intent": "solve_math", "keywords": ["calculate", "math", "equation", "solve"] },
+  { "intent": "semantic_search", "keywords": ["find", "search", "lookup", "retrieve"] },
+  { "intent": "generate_image", "keywords": ["draw", "generate image", "create picture"] },
+  { "intent": "qa_grade", "keywords": ["score", "rate", "grade", "evaluate"] },
+  { "intent": "reflect", "keywords": ["reflect", "learn", "update memory"] },
+  { "intent": "video_generator", "keywords": ["make video", "animate", "cinematic"] }
+]
