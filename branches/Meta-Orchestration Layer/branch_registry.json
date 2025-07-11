@@ -1,0 +1,6 @@
+[
+  { "name": "math_solver", "description": "Solves and graphs math queries" },
+  { "name": "memory_core", "description": "Stores and retrieves user memory" },
+  { "name": "qa_validator", "description": "Scores and grades responses" },
+  ...
+]
