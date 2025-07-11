@@ -4,7 +4,33 @@ from flask import jsonify
 
 MEMORY_FILE = os.path.join(os.path.dirname(__file__), "memory.json")
 
+def generate_reflection(entry):
+    """Trigger reflection for a single log entry."""
+    try:
+        score = entry.get("score", 0.0)
+        tags = entry.get("tags", [])
+        issues = []
+
+        if score < 0.5:
+            issues.append("⚠️ Low score — consider output restructuring.")
+        if "uncertain" in tags:
+            issues.append("🔍 Uncertainty detected — add clarity.")
+        if "feedback" in tags:
+            issues.append("🔁 Feedback pattern recognized — retrain module.")
+
+        return {
+            "success": True,
+            "reflection": issues or ["✅ Entry looks solid."]
+        }
+
+    except Exception as e:
+        return {
+            "success": False,
+            "error": f"Reflection failed: {str(e)}"
+        }
+
 def reflect_summary(request):
+    """Summarize memory patterns and scoring history."""
     try:
         if not os.path.exists(MEMORY_FILE):
             return jsonify({ "success": True, "summary": "🧠 No memory logs yet." })
@@ -23,10 +49,8 @@ def reflect_summary(request):
         all_tags = [tag.lower() for m in memory for tag in m.get("tags", []) if isinstance(tag, str)]
         tag_freq = Counter(all_tags).most_common(5)
 
-        avg_score = 0.0
         scored = [m.get("meta", {}).get("score", 0.0) for m in memory if "score" in m.get("meta", {})]
-        if scored:
-            avg_score = round(sum(scored) / len(scored), 2)
+        avg_score = round(sum(scored) / len(scored), 2) if scored else 0.0
 
         patterns = []
         if failure_logs > 0:
