@@ -1,0 +1,14 @@
+{
+  "branches": {
+    "core_router": "Routes user input to correct module",
+    "qa_validator": "Scores answers for clarity and relevance",
+    "image_generator": "Creates visuals based on prompts",
+    "self_learning": "Learns from feedback and scoring",
+    "response_formatter": "Stylizes tone and format of replies"
+  },
+  "concepts": {
+    "reflection": "Adjusting output strategy based on feedback",
+    "tone": "Style of writing — friendly, formal, excited",
+    "simplify": "Removes complex phrasing for beginners"
+  }
+}
