@@ -1,0 +1,19 @@
+{
+  "templates": [
+    {
+      "style": "highlight",
+      "prefix": "🔍 Here's what you need to know:",
+      "suffix": ""
+    },
+    {
+      "style": "formal",
+      "prefix": "In summary,",
+      "suffix": ""
+    },
+    {
+      "style": "excited",
+      "prefix": "🎉 Great news!",
+      "suffix": ""
+    }
+  ]
+}
