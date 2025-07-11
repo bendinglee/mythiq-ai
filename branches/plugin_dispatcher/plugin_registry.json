@@ -1,0 +1,10 @@
+[
+  {
+    "name": "hello_plugin",
+    "code": "def run(input): return f'Hello, {input}!'"
+  },
+  {
+    "name": "emoji_echo",
+    "code": "def run(input): return f'🔁 {input} 🔁'"
+  }
+]
