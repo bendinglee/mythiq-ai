@@ -1,0 +1,21 @@
+{
+  "style_map": {
+    "default": {},
+    "dreamy": {
+      "style": "dreamscape",
+      "temperature": 0.6
+    },
+    "cyberpunk": {
+      "style": "cyberpunk neon",
+      "temperature": 0.8
+    },
+    "minimal": {
+      "style": "flat minimalism",
+      "temperature": 0.3
+    },
+    "cinematic": {
+      "style": "cinematic dark",
+      "temperature": 0.9
+    }
+  }
+}
