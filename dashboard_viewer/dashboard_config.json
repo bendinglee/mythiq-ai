@@ -1,0 +1,13 @@
+{
+  "layout": {
+    "theme": "dark",
+    "widgets": ["branch_map", "memory_feed", "score_panel", "feedback_chart"],
+    "refresh_interval": 5000
+  },
+  "panels": {
+    "branch_map": { "title": "Live Branch Status" },
+    "memory_feed": { "title": "Recent Memory Entries" },
+    "score_panel": { "title": "QA Metrics" },
+    "feedback_chart": { "title": "Reflection Tags" }
+  }
+}
