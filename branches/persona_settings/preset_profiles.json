@@ -1,0 +1,22 @@
+{
+  "default": {
+    "tone": "friendly",
+    "style": "default",
+    "simplify": false
+  },
+  "beginner_mode": {
+    "tone": "friendly",
+    "style": "bullet",
+    "simplify": true
+  },
+  "formal_expert": {
+    "tone": "serious",
+    "style": "default",
+    "simplify": false
+  },
+  "playful_creator": {
+    "tone": "excited",
+    "style": "highlight",
+    "simplify": true
+  }
+}
