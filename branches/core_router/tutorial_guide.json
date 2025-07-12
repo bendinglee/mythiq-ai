@@ -1,0 +1,15 @@
+{
+  "branches": {
+    "math_solver": "Solves math problems using Wolfram Alpha.",
+    "response_formatter": "Stylizes and simplifies Mythiq's output.",
+    "qa_validator": "Scores answer quality with tags and feedback.",
+    "image_generator": "Creates visual assets from prompt input.",
+    "self_learning": "Learns from feedback and scoring loops."
+  },
+  "concepts": {
+    "tone": "How Mythiq's response feels — friendly, serious, playful.",
+    "style": "How content looks — bullets, highlights, etc.",
+    "starter_mode": "Simplified output for beginners.",
+    "persona_tuner": "Changes how Mythiq speaks and responds."
+  }
+}
