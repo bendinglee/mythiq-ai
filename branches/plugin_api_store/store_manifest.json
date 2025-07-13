@@ -1,0 +1,20 @@
+{
+  "packs": [
+    {
+      "name": "starter_creative",
+      "description": "Adds creative plugins for image, emoji, jokes.",
+      "plugins": [
+        { "name": "emoji_echo", "code": "def run(x): return f'🔁 {x} 🔁'" },
+        { "name": "quick_joke", "code": "def run(x): return 'Why did the AI cross the road? To optimize the chicken.'"}
+      ]
+    },
+    {
+      "name": "edu_helper",
+      "description": "Adds educational helpers for vocabulary and grammar.",
+      "plugins": [
+        { "name": "define_term", "code": "def run(x): return f'Definition of {x}: [simulated]'"},
+        { "name": "grammar_tip", "code": "def run(x): return f'Grammar suggestion: simplify {x}'"}
+      ]
+    }
+  ]
+}
