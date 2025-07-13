@@ -1,0 +1,22 @@
+{
+  "tests": [
+    {
+      "branch": "qa_validator",
+      "endpoint": "/api/validate-answer",
+      "input": { "question": "What is AI?", "answer": "AI stands for Artificial Intelligence." },
+      "expected": "score"
+    },
+    {
+      "branch": "creator_mode",
+      "endpoint": "/creator-mode",
+      "input": { "prompt": "A fantasy castle", "mode": "image", "style": "cinematic" },
+      "expected": "success"
+    },
+    {
+      "branch": "tutorial_mode",
+      "endpoint": "/tutorial-mode",
+      "input": {},
+      "expected": "faq"
+    }
+  ]
+}
