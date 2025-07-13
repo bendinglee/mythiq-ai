@@ -59,7 +59,7 @@ try:
     from branches.api_integrator.routes import api_data_api
     from branches.plugin_dispatcher.routes import plugin_api
     from branches.dataset_tuner.routes import dataset_api
-    from branches.templates.routes import templates_api  # ✅ Newly added
+    from branches.templates.routes import templates_api
     app.register_blueprint(formatter_api)
     app.register_blueprint(user_profile_api)
     app.register_blueprint(accessibility_api)
@@ -68,7 +68,7 @@ try:
     app.register_blueprint(api_data_api)
     app.register_blueprint(plugin_api)
     app.register_blueprint(dataset_api)
-    app.register_blueprint(templates_api)  # ✅ Wire the templates branch
+    app.register_blueprint(templates_api)
 
     # Phase 1 additions
     from branches.creator_mode.routes import creator_api
@@ -76,11 +76,13 @@ try:
     from branches.tutorial_mode.routes import tutorial_api
     from branches.persona_settings.routes import persona_api
     from branches.self_diagnostics.routes import diagnostics_api
+    from branches.self_tuner.routes import tuner_api  # ✅ Phase 4
     app.register_blueprint(creator_api)
     app.register_blueprint(dashboard_api)
     app.register_blueprint(tutorial_api)
     app.register_blueprint(persona_api)
     app.register_blueprint(diagnostics_api)
+    app.register_blueprint(tuner_api)
 
     # Phase 2 plugin store
     from branches.plugin_api_store.routes import plugin_store_api
