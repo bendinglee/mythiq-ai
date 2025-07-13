@@ -59,16 +59,28 @@ try:
     from branches.api_integrator.routes import api_data_api
     from branches.plugin_dispatcher.routes import plugin_api
     from branches.dataset_tuner.routes import dataset_api
+    from branches.templates.routes import templates_api  # ✅ Newly added
+    app.register_blueprint(formatter_api)
+    app.register_blueprint(user_profile_api)
+    app.register_blueprint(accessibility_api)
+    app.register_blueprint(task_api)
+    app.register_blueprint(translation_api)
+    app.register_blueprint(api_data_api)
+    app.register_blueprint(plugin_api)
+    app.register_blueprint(dataset_api)
+    app.register_blueprint(templates_api)  # ✅ Wire the templates branch
 
     # Phase 1 additions
     from branches.creator_mode.routes import creator_api
     from branches.dashboard_viewer.routes import dashboard_api
     from branches.tutorial_mode.routes import tutorial_api
     from branches.persona_settings.routes import persona_api
+    from branches.self_diagnostics.routes import diagnostics_api
     app.register_blueprint(creator_api)
     app.register_blueprint(dashboard_api)
     app.register_blueprint(tutorial_api)
     app.register_blueprint(persona_api)
+    app.register_blueprint(diagnostics_api)
 
     # Phase 2 plugin store
     from branches.plugin_api_store.routes import plugin_store_api
@@ -78,18 +90,10 @@ try:
     from branches.intent_engine.routes import intent_api
     from branches.memory_core.session_tracker import current_session
     from branches.vector_store.vector_interpreter import interpret_query
+    app.register_blueprint(intent_api)
 
     # Orchestration
     from branches.brain_orchestrator.routes import brain_api
-    app.register_blueprint(formatter_api)
-    app.register_blueprint(user_profile_api)
-    app.register_blueprint(accessibility_api)
-    app.register_blueprint(task_api)
-    app.register_blueprint(translation_api)
-    app.register_blueprint(api_data_api)
-    app.register_blueprint(plugin_api)
-    app.register_blueprint(dataset_api)
-    app.register_blueprint(intent_api)
     app.register_blueprint(brain_api)
 
     print("✅ All branches injected successfully.")
