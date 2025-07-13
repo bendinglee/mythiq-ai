@@ -1,8 +1,7 @@
 {
   "presets": [
     { "label": "Explain AI simply", "prompt": "What is artificial intelligence in beginner terms?" },
-    { "label": "Create checklist", "prompt": "List the steps to deploy a Python app." },
-    { "label": "Make a friendly reply", "prompt": "Respond to: 'Tell me a joke'" },
-    { "label": "Ask for summary", "prompt": "Summarize: 'The role of neural networks'" }
+    { "label": "Create checklist", "prompt": "List steps to deploy a Python app." },
+    { "label": "Friendly response", "prompt": "Respond to: 'Tell me a joke'" }
   ]
 }
