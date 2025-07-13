@@ -70,13 +70,13 @@ try:
     app.register_blueprint(dataset_api)
     app.register_blueprint(templates_api)
 
-    # Phase 1 additions
+    # Phase 1–4
     from branches.creator_mode.routes import creator_api
     from branches.dashboard_viewer.routes import dashboard_api
     from branches.tutorial_mode.routes import tutorial_api
     from branches.persona_settings.routes import persona_api
     from branches.self_diagnostics.routes import diagnostics_api
-    from branches.self_tuner.routes import tuner_api  # ✅ Phase 4
+    from branches.self_tuner.routes import tuner_api
     app.register_blueprint(creator_api)
     app.register_blueprint(dashboard_api)
     app.register_blueprint(tutorial_api)
@@ -87,6 +87,18 @@ try:
     # Phase 2 plugin store
     from branches.plugin_api_store.routes import plugin_store_api
     app.register_blueprint(plugin_store_api)
+
+    # Phase 5 dispatch logic
+    from branches.dispatch_optimizer.routes import dispatch_optimizer_api
+    app.register_blueprint(dispatch_optimizer_api)
+
+    # Phase 6 creator UI (served via Railway static frontend)
+
+    # Phase 7–10 internal logic (fused into dispatch + memory)
+    from branches.reflex_trainer.response_rewriter import rewrite
+    from branches.cortex_fusion.task_dispatcher import dispatch
+    from branches.cortex_fusion.load_balancer import balance
+    from branches.cortex_fusion.fallback_router import reroute
 
     # Routing
     from branches.intent_engine.routes import intent_api
@@ -161,6 +173,13 @@ def classify():
 @app.route("/api/dispatch", methods=["POST"])
 def dispatch():
     return dispatch_input(request)
+
+@app.route("/api/dispatch-optimize", methods=["POST"])
+def dispatch_optimize():
+    from branches.dispatch_optimizer.adaptive_dispatcher import dynamic_dispatch
+    data = request.get_json()
+    result = dynamic_dispatch(data)
+    return jsonify({ "success": True, "result": result })
 
 @app.route("/api/generate-image", methods=["POST"])
 def generate_image():
