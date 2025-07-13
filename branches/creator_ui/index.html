@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Mythiq Creator Engine</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <h1>🧠 Mythiq Creator</h1>
+
+  <div class="creator-form">
+    <textarea id="promptInput" placeholder="Enter a visual or video prompt..."></textarea>
+
+    <select id="modeSelect">
+      <option value="image">Image</option>
+      <option value="video">Video</option>
+      <option value="visual">Visual Creator</option>
+    </select>
+
+    <select id="styleSelect">
+      <option value="default">Default</option>
+      <option value="dreamy">Dreamy</option>
+      <option value="cyberpunk">Cyberpunk</option>
+      <option value="minimal">Minimal</option>
+      <option value="cinematic">Cinematic</option>
+    </select>
+
+    <button onclick="runCreator()">Generate</button>
+  </div>
+
+  <div id="outputPreview" class="preview"></div>
+
+  <script src="script.js"></script>
+</body>
+</html>
