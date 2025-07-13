@@ -1,0 +1,27 @@
+@app.route("/api/dispatch-reflex", methods=["POST"])
+def dispatch_reflex():
+    try:
+        from branches.feedback_loop import feedback_loop
+        from branches.reflex_trainer.response_rewriter import rewrite
+        from branches.reflex_trainer.emotion_tagger import tag
+        from branches.cortex_fusion.task_dispatcher import dispatch
+        from branches.cortex_fusion.fallback_router import reroute
+
+        payload = request.get_json()
+        enriched = feedback_loop(payload)
+
+        output_text = enriched.get("output", "")
+        emotion = tag(output_text)
+        rewritten = rewrite(output_text)
+        task = dispatch(payload.get("task_type", "text"), enriched["meta"].get("diagnostic_score", 0.5))
+
+        route_decision = reroute(task) if enriched["meta"]["diagnostic_score"] < 0.4 else { "fallback": task }
+
+        enriched["output"] = rewritten
+        enriched["meta"]["emotion_tag"] = emotion
+        enriched["meta"]["final_task_route"] = route_decision.get("fallback")
+
+        return jsonify({ "success": True, "result": enriched })
+
+    except Exception as e:
+        return jsonify({ "success": False, "error": str(e) }), 500
