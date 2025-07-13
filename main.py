@@ -22,16 +22,16 @@ try:
 except Exception as e:
     print("❌ Module injection failed:", traceback.format_exc())
 
-# 🔗 Import and register all branch blueprints
+# 🔗 Blueprint registration
 try:
-    # Core & cognition
+    # Core cognition
     from branches.math_solver.solver import solve_math_query
     from branches.general_knowledge.query import answer_general_knowledge
     from branches.semantic_search.query_router import query_fuzzy_route
     from branches.intent_router.classifier import classify_intent
     from branches.core_router.dispatcher import dispatch_input
     from branches.doc_ingestor.routes import load_docs_route
-    from branches.qa_validator.routes import validate_answer_route
+    from branches.qa_validator.routes import validate_answer_route, full_feedback_pipeline
     from branches.self_learning.reflect import reflect_summary
     from branches.self_learning.recall import retrieve_entries
     from branches.self_learning.log import log_entry
@@ -39,7 +39,7 @@ try:
     from branches.seo_master.routes import optimize_keywords_route
     from branches.uncertainty_detector.confidence_overlay import confidence_score
 
-    # Visual & generation
+    # Generation
     from branches.image_generator.routes import generate_image_route
     from branches.image_synth.routes import image_api
     from branches.visual_creator.routes import visual_api
@@ -50,7 +50,7 @@ try:
     app.register_blueprint(gallery_api)
     app.register_blueprint(video_api)
 
-    # Functional extensions
+    # Extensions
     from branches.response_formatter.routes import formatter_api
     from branches.user_profile.routes import user_profile_api
     from branches.accessibility_core.routes import accessibility_api
@@ -60,7 +60,21 @@ try:
     from branches.plugin_dispatcher.routes import plugin_api
     from branches.dataset_tuner.routes import dataset_api
 
-    # Cognitive routing
+    # Phase 1 additions
+    from branches.creator_mode.routes import creator_api
+    from branches.dashboard_viewer.routes import dashboard_api
+    from branches.tutorial_mode.routes import tutorial_api
+    from branches.persona_settings.routes import persona_api
+    app.register_blueprint(creator_api)
+    app.register_blueprint(dashboard_api)
+    app.register_blueprint(tutorial_api)
+    app.register_blueprint(persona_api)
+
+    # Phase 2 plugin store
+    from branches.plugin_api_store.routes import plugin_store_api
+    app.register_blueprint(plugin_store_api)
+
+    # Routing
     from branches.intent_engine.routes import intent_api
     from branches.memory_core.session_tracker import current_session
     from branches.vector_store.vector_interpreter import interpret_query
@@ -79,11 +93,10 @@ try:
     app.register_blueprint(brain_api)
 
     print("✅ All branches injected successfully.")
-
 except Exception as e:
     print("❌ Branch registration failed:", traceback.format_exc())
 
-# 🌐 Core routes
+# 🌐 API routes
 
 @app.route("/api/status", methods=["GET"])
 def status():
@@ -91,12 +104,9 @@ def status():
 
 @app.route("/api/solve-math", methods=["POST"])
 def solve_math():
-    try:
-        data = request.get_json()
-        result = solve_math_query(data.get("question", ""))
-        return jsonify({ "success": True, "result": result })
-    except Exception as e:
-        return jsonify({ "success": False, "error": str(e) }), 500
+    data = request.get_json()
+    result = solve_math_query(data.get("question", ""))
+    return jsonify({ "success": True, "result": result })
 
 @app.route("/api/query-knowledge", methods=["GET"])
 def query_knowledge():
@@ -130,6 +140,10 @@ def reflect_logs():
 def validate_answer():
     return validate_answer_route()
 
+@app.route("/api/grade-feedback", methods=["POST"])
+def grade_feedback():
+    return full_feedback_pipeline()
+
 @app.route("/api/optimize-keywords", methods=["POST"])
 def optimize_keywords():
     return optimize_keywords_route()
@@ -146,11 +160,6 @@ def dispatch():
 def generate_image():
     return generate_image_route()
 
-@app.route("/")
-def index():
-    return render_template("index.html")
-
-# 🔁 Cognitive checks
 @app.route("/api/session", methods=["GET"])
 def session():
     return jsonify(current_session())
@@ -163,7 +172,10 @@ def confidence():
 def vector_search():
     return interpret_query(request)
 
-# ✅ Final confirmation
+@app.route("/")
+def index():
+    return render_template("index.html")
+
 print("🎯 Mythiq operational — launching Flask...")
 
 if __name__ == "__main__":
