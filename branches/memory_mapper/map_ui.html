@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head><title>Memory Grid</title></head>
+<body>
+  <h1>🧠 Mythiq Memory Map</h1>
+  <button onclick="loadGrid()">Grid</button>
+  <button onclick="loadTimeline()">Timeline</button>
+  <pre id="output"></pre>
+  <script>
+    async function loadGrid() {
+      const res = await fetch("/api/memory-map");
+      const data = await res.json();
+      document.getElementById("output").innerText = JSON.stringify(data.grid, null, 2);
+    }
+    async function loadTimeline() {
+      const res = await fetch("/api/persona-timeline");
+      const data = await res.json();
+      document.getElementById("output").innerText = JSON.stringify(data.timeline, null, 2);
+    }
+  </script>
+</body>
+</html>
