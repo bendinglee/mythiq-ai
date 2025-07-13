@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head><title>Create Plugin</title></head>
+<body>
+  <h1>🧠 Plugin Forge</h1>
+  <input id="name" placeholder="Plugin name" /><br/>
+  <input id="function" placeholder="Function name" /><br/>
+  <input id="desc" placeholder="Description" /><br/>
+  <textarea id="logic" placeholder="Plugin logic here...">return "Success!"</textarea><br/>
+  <button onclick="create()">Build Plugin</button>
+  <pre id="result"></pre>
+  <script>
+    async function create() {
+      const payload = {
+        name: document.getElementById("name").value,
+        function_name: document.getElementById("function").value,
+        description: document.getElementById("desc").value,
+        logic: document.getElementById("logic").value
+      };
+      const res = await fetch("/api/plugin-construct", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      document.getElementById("result").innerText = JSON.stringify(data, null, 2);
+    }
+  </script>
+</body>
+</html>
