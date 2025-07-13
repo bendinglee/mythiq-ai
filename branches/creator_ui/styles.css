@@ -1,0 +1,34 @@
+body {
+  font-family: Arial, sans-serif;
+  padding: 20px;
+  background-color: #111;
+  color: #f4f4f4;
+}
+
+h1 {
+  margin-bottom: 10px;
+  color: #aee;
+}
+
+.creator-form {
+  margin-bottom: 20px;
+}
+
+textarea {
+  width: 100%;
+  height: 80px;
+  margin-bottom: 10px;
+  font-size: 16px;
+}
+
+select, button {
+  margin: 5px 0;
+  padding: 10px;
+  font-size: 16px;
+}
+
+.preview img, .preview video {
+  width: 100%;
+  margin-top: 20px;
+  border: 2px solid #444;
+}
