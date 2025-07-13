@@ -4,6 +4,7 @@ from branches.self_learning.log import log_entry
 from branches.self_learning.reflect import generate_reflection
 from branches.self_diagnostics.test_runner import run_all_tests
 from branches.self_diagnostics.score_mapper import compute_score
+from branches.self_tuner.tune_persona import tune_persona_settings  # 🔁 Added
 
 def feedback_loop(payload):
     score_data = log_grade(payload, return_only=True)
@@ -20,6 +21,10 @@ def feedback_loop(payload):
         "reflection": reflection.get("reflection", []),
         "diagnostic_score": diag_score
     }
+
+    # 🔁 Auto-adjust persona config based on diagnostics + feedback
+    tune_result = tune_persona_settings(enriched_meta)
+    enriched_meta["tune_profile"] = tune_result.get("preset")
 
     enriched_payload = {
         **payload,
