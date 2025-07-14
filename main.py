@@ -232,7 +232,23 @@ def vector_search():
 def index():
     return render_template("index.html")
 
-print("🎯 Mythiq operational — launching Flask...")
+if __name__ == "__main__":
+    try:
+        port = int(os.environ.get("PORT", 5000))
+        print(f"🟢 Mythiq running at http://0.0.0.0:{port}")
+
+        # Sanity check: confirm /api/status route is registered
+        with app.test_request_context():
+            status_rule = next((rule.rule for rule in app.url_map.iter_rules() if "/api/status" in rule.rule), None)
+            if status_rule:
+                print("✅ /api/status endpoint detected — Railway healthcheck should pass")
+            else:
+                print("❌ /api/status not registered — check Blueprint or route function")
+
+        app.run(host="0.0.0.0", port=port)
+
+    except Exception as e:
+        print(f"❌ Flask startup failed: {e}")
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
