@@ -5,31 +5,52 @@ from branches.self_learning.reflect import generate_reflection
 from branches.self_diagnostics.test_runner import run_all_tests
 from branches.self_diagnostics.score_mapper import compute_score
 from branches.self_tuner.tune_persona import tune_persona_settings  # 🔁 Added
+import traceback
 
 def feedback_loop(payload):
-    score_data = log_grade(payload, return_only=True)
-    confidence_data = confidence_score(payload, return_only=True)
-    reflection = generate_reflection({ **payload.get("meta", {}), **score_data })
+    try:
+        # 🎯 Defensive extraction
+        meta = payload.get("meta", {})
+        score_data = log_grade(payload, return_only=True) or {}
+        confidence_data = confidence_score(payload, return_only=True) or {}
 
-    diagnostics = run_all_tests()
-    diag_score = compute_score(diagnostics)
+        # 🪞 Reflection processing
+        reflection_input = { **meta, **score_data }
+        reflection = generate_reflection(reflection_input) or {}
 
-    enriched_meta = {
-        **payload.get("meta", {}),
-        "score": score_data.get("score", 0.0),
-        "confidence": confidence_data.get("confidence", 0.0),
-        "reflection": reflection.get("reflection", []),
-        "diagnostic_score": diag_score
-    }
+        # 🧪 Self-diagnostics scoring
+        diagnostics = run_all_tests() or {}
+        diag_score = compute_score(diagnostics)
 
-    # 🔁 Auto-adjust persona config based on diagnostics + feedback
-    tune_result = tune_persona_settings(enriched_meta)
-    enriched_meta["tune_profile"] = tune_result.get("preset")
+        # 🔁 Persona tuning
+        enriched_meta = {
+            **meta,
+            "score": score_data.get("score", 0.0),
+            "confidence": confidence_data.get("confidence", 0.0),
+            "reflection": reflection.get("reflection", []),
+            "diagnostic_score": diag_score
+        }
 
-    enriched_payload = {
-        **payload,
-        "meta": enriched_meta
-    }
+        tune_result = tune_persona_settings(enriched_meta) or {}
+        enriched_meta["tune_profile"] = tune_result.get("preset", "default")
 
-    log_entry(enriched_payload)
-    return enriched_payload
+        # 🧠 Final enriched output
+        enriched_payload = {
+            **payload,
+            "meta": enriched_meta
+        }
+
+        log_entry(enriched_payload)
+        return enriched_payload
+
+    except Exception as e:
+        # 🛡️ If any module fails, log and fail gracefully
+        error_trace = traceback.format_exc()
+        fallback_payload = {
+            "success": False,
+            "error": str(e),
+            "trace": error_trace,
+            "meta": { "diagnostic_score": 0.0, "tune_profile": "safe_fallback" }
+        }
+        log_entry(fallback_payload)
+        return fallback_payload
