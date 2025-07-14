@@ -10,33 +10,30 @@ RUN apt update && apt install -y \
   net-tools \
   ca-certificates
 
+# 💥 Add alias so 'python' maps to 'python3'
+RUN ln -s /usr/bin/python3 /usr/bin/python
+
 # 📁 Working directory
 WORKDIR /app
 
-# 🧪 Copy requirements first for caching
+# 🔗 Copy requirements first
 COPY requirements.txt ./
 
-# 🎯 Set up Python virtual environment and install dependencies
-RUN python3 -m venv /opt/venv && \
+# ⚙️ Install dependencies in virtualenv and activate
+RUN python -m venv --copies /opt/venv && \
     . /opt/venv/bin/activate && \
     pip install --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
-# 🔗 Copy full app source code
+# 📦 Copy full app
 COPY . /app
 
-# ✅ Activate environment path
+# ✅ Activate virtualenv on startup
 ENV PATH="/opt/venv/bin:$PATH"
 
-# 🚪 Expose dynamic Railway port
+# 🚪 Expose port
 ENV PORT=5000
 EXPOSE 5000
 
-# 🧠 Print version and verify entrypoint file
-RUN python3 -V && \
-    echo "Mythiq container ready for port $PORT" && \
-    echo "📂 Contents of /app:" && \
-    ls -al /app
-
-# 🚀 Launch Mythiq directly with Python for full log visibility
-CMD ["python3", "main.py"]
+# 🚀 Launch using Gunicorn
+CMD ["gunicorn", "main:app", "-b", "0.0.0.0:$PORT"]
