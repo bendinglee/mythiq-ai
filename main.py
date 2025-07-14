@@ -2,15 +2,14 @@ from flask import Flask, request, jsonify, render_template
 import os, traceback, time, sys
 from dotenv import load_dotenv
 
-# 🧠 Entrypoint diagnostic
+# 🐉 Mythiq entrypoint marker
 print("🐉 Mythiq entrypoint hit — Python is live")
 sys.stdout.flush()
 
-# 🔐 Environment setup
+# 🔐 Load environment variables
 load_dotenv()
 HF_TOKEN = os.getenv("HF_TOKEN")
 WOLFRAM_APP_ID = os.getenv("WOLFRAM_APP_ID")
-
 print("🚀 Mythiq ignition sequence started.")
 print("HF_TOKEN present:", bool(HF_TOKEN))
 print("WOLFRAM_APP_ID present:", bool(WOLFRAM_APP_ID))
@@ -19,7 +18,7 @@ sys.stdout.flush()
 # ✅ Initialize Flask
 app = Flask(__name__, static_url_path="/static")
 
-# 🔁 Dynamic module injection
+# 🔁 Inject dynamic modules
 try:
     from branches import init_modules
     init_modules(app)
@@ -29,7 +28,7 @@ except Exception as e:
     print("❌ Module injection failed:", traceback.format_exc())
     sys.stdout.flush()
 
-# 🔗 Blueprint registration
+# 🔗 Register blueprints
 try:
     from branches.math_solver.solver import solve_math_query
     from branches.general_knowledge.query import answer_general_knowledge
@@ -108,7 +107,7 @@ def solve_math():
     result = solve_math_query(data.get("question", ""))
     return jsonify({ "success": True, "result": result })
 
-# Additional routes should go here...
+# ➕ Add additional @app.route blocks as needed...
 
 @app.route("/")
 def index():
@@ -117,33 +116,22 @@ def index():
     except Exception as e:
         return jsonify({ "error": "index.html not found", "details": str(e) })
 
-# 🧠 Flask readiness log
+# 🧠 Flask readiness marker
 @app.before_first_request
 def on_ready():
     print("✅ Flask app initialized and ready to receive requests.")
     sys.stdout.flush()
 
-# 🚀 Launch with full trace
-if __name__ == "__main__":
-    try:
-        port = int(os.environ.get("PORT", 5000))
-        print(f"🧠 Beginning Flask startup sequence on port {port}...")
+# 🧪 Optional route trace toggle for debugging
+if os.getenv("TRACE_ROUTES") == "true":
+    with app.test_request_context():
+        registered_routes = [r.rule for r in app.url_map.iter_rules()]
+        print("✅ /api/status registered" if "/api/status" in registered_routes else "❌ /api/status NOT found")
+        print("🔍 Registered routes:")
+        for rule in app.url_map.iter_rules():
+            print(f"• {rule.rule} [{', '.join(rule.methods)}]")
         sys.stdout.flush()
 
-        with app.test_request_context():
-            registered_routes = [r.rule for r in app.url_map.iter_rules()]
-            print("✅ /api/status registered" if "/api/status" in registered_routes else "❌ /api/status NOT found")
-            print("🔍 Registered routes:")
-            for rule in app.url_map.iter_rules():
-                print(f"• {rule.rule} [{', '.join(rule.methods)}]")
-            sys.stdout.flush()
-
-        print("📂 Current working directory:", os.getcwd())
-        print("📦 Files found:", os.listdir(os.getcwd()))
-        sys.stdout.flush()
-
-        app.run(host="0.0.0.0", port=port, debug=False)
-
-    except Exception as e:
-        print(f"❌ Flask failed to launch: {e}")
-        sys.stdout.flush()
+    print("📂 Current working directory:", os.getcwd())
+    print("📦 Files found:", os.listdir(os.getcwd()))
+    sys.stdout.flush()
