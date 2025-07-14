@@ -1,0 +1,22 @@
+# Normalize line endings for consistency across OSes
+* text=auto
+
+# Python files
+*.py text eol=lf
+
+# Shell scripts
+*.sh text eol=lf
+
+# Config and env files
+*.env text eol=lf
+*.toml text eol=lf
+*.json text eol=lf
+*.yml text eol=lf
+
+# Ignore binary files
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.zip binary
