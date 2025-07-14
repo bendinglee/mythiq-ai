@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify, render_template
-import os, traceback, time
+import os, traceback, time, sys
 from dotenv import load_dotenv
 
 # 🔐 Environment setup
@@ -10,6 +10,7 @@ WOLFRAM_APP_ID = os.getenv("WOLFRAM_APP_ID")
 print("🚀 Mythiq ignition sequence started.")
 print("HF_TOKEN present:", bool(HF_TOKEN))
 print("WOLFRAM_APP_ID present:", bool(WOLFRAM_APP_ID))
+sys.stdout.flush()
 
 # ✅ Initialize Flask
 app = Flask(__name__, static_url_path="/static")
@@ -19,12 +20,14 @@ try:
     from branches import init_modules
     init_modules(app)
     print("🔄 Dynamic modules loaded.")
+    sys.stdout.flush()
 except Exception as e:
     print("❌ Module injection failed:", traceback.format_exc())
+    sys.stdout.flush()
 
 # 🔗 Blueprint registration
 try:
-    # Branch imports (same as your current list)
+    # ➕ Import and register all blueprints (same as before)
     from branches.math_solver.solver import solve_math_query
     from branches.general_knowledge.query import answer_general_knowledge
     from branches.semantic_search.query_router import query_fuzzy_route
@@ -71,7 +74,6 @@ try:
     from branches.vector_store.vector_interpreter import interpret_query
     from branches.brain_orchestrator.routes import brain_api
 
-    # Register blueprints
     for bp in [
         image_api, visual_api, gallery_api, video_api,
         formatter_api, user_profile_api, accessibility_api, task_api,
@@ -83,8 +85,10 @@ try:
         app.register_blueprint(bp)
 
     print("✅ All branches injected successfully.")
+    sys.stdout.flush()
 except Exception as e:
     print("❌ Branch registration failed:", traceback.format_exc())
+    sys.stdout.flush()
 
 # 🌐 Core API routes
 @app.route("/api/status", methods=["GET"])
@@ -101,7 +105,7 @@ def solve_math():
     result = solve_math_query(data.get("question", ""))
     return jsonify({ "success": True, "result": result })
 
-# ... (keep all other @app.routes as they are in your current file)
+# ➕ Add other @app.route blocks here as needed...
 
 @app.route("/")
 def index():
@@ -110,29 +114,33 @@ def index():
     except Exception as e:
         return jsonify({ "error": "index.html not found", "details": str(e) })
 
-# ✅ Readiness ping marker before first request
+# 🧠 Readiness marker
 @app.before_first_request
 def on_ready():
     print("✅ Flask app initialized and ready to receive requests.")
+    sys.stdout.flush()
 
-# 🚀 Launch Mythiq with trace and healthcheck confirmation
+# 🚀 Launch Mythiq with diagnostics
 if __name__ == "__main__":
     try:
         port = int(os.environ.get("PORT", 5000))
-        print(f"🟢 Mythiq launching at http://0.0.0.0:{port}")
+        print(f"🧠 Beginning Flask startup sequence on port {port}...")
+        sys.stdout.flush()
 
         with app.test_request_context():
             registered_routes = [r.rule for r in app.url_map.iter_rules()]
             print("✅ /api/status registered" if "/api/status" in registered_routes else "❌ /api/status NOT found")
-
-        print("🔍 Registered routes:")
-        for rule in app.url_map.iter_rules():
-            print(f"• {rule.rule} [{', '.join(rule.methods)}]")
+            print("🔍 Registered routes:")
+            for rule in app.url_map.iter_rules():
+                print(f"• {rule.rule} [{', '.join(rule.methods)}]")
+            sys.stdout.flush()
 
         print("📂 Current working directory:", os.getcwd())
         print("📦 Files found:", os.listdir(os.getcwd()))
+        sys.stdout.flush()
 
         app.run(host="0.0.0.0", port=port, debug=False)
 
     except Exception as e:
         print(f"❌ Flask failed to launch: {e}")
+        sys.stdout.flush()
