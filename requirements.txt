@@ -1,10 +1,19 @@
+# 🔧 Core Frameworks
 Flask==2.3.3
 Flask-CORS==4.0.0
 gunicorn==21.2.0
 requests==2.31.0
 python-dotenv==1.0.0
+
+# 🧠 AI & Embedding Models
 sentence-transformers>=2.3.0
-transformers
-torch
-faiss-cpu
+transformers>=4.37.0
+torch>=2.1.0
+faiss-cpu>=1.7.4
+
+# 📐 Utilities for fallback-safe scoring and diagnostics
+numpy>=1.24.0
+scikit-learn>=1.4.0
+
+# 🔁 Trigger for Mythiq rebuild
 # mythiq rebuild trigger
