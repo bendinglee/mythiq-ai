@@ -1,35 +1,30 @@
-# ✅ Use a base image that includes build tools
 FROM ubuntu:22.04
 
-# 🔧 System setup
+# 🛠️ System dependencies
 RUN apt update && apt install -y \
-    python3 \
-    python3-pip \
-    python3-venv \
-    curl \
-    git
+  python3 \
+  python3-pip \
+  python3-venv
 
-# 📁 Set working directory
+# 📁 Working directory
 WORKDIR /app
 
-# 📦 Copy requirements first (for layer caching)
+# 📦 Dependency install
 COPY requirements.txt ./
-
-# ⚙️ Install dependencies
 RUN python3 -m venv /opt/venv && \
     . /opt/venv/bin/activate && \
     pip install --upgrade pip && \
     pip install -r requirements.txt
 
-# 🧠 Add rest of the app
+# 🔗 Add app files
 COPY . /app
 
-# ⚙️ Activate venv at runtime
+# ✅ Activate environment
 ENV PATH="/opt/venv/bin:$PATH"
 
-# 🚪 Expose port for Railway compatibility
+# 🚪 Expose port
 ENV PORT=5000
 EXPOSE 5000
 
-# 🚀 Launch Mythiq
+# 🔮 Launch Mythiq
 CMD ["gunicorn", "main:app", "-b", "0.0.0.0:$PORT"]
