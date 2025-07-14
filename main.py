@@ -2,6 +2,10 @@ from flask import Flask, request, jsonify, render_template
 import os, traceback, time, sys
 from dotenv import load_dotenv
 
+# 🧠 Entrypoint diagnostic
+print("🐉 Mythiq entrypoint hit — Python is live")
+sys.stdout.flush()
+
 # 🔐 Environment setup
 load_dotenv()
 HF_TOKEN = os.getenv("HF_TOKEN")
@@ -27,7 +31,6 @@ except Exception as e:
 
 # 🔗 Blueprint registration
 try:
-    # ➕ Import and register all blueprints (same as before)
     from branches.math_solver.solver import solve_math_query
     from branches.general_knowledge.query import answer_general_knowledge
     from branches.semantic_search.query_router import query_fuzzy_route
@@ -105,7 +108,7 @@ def solve_math():
     result = solve_math_query(data.get("question", ""))
     return jsonify({ "success": True, "result": result })
 
-# ➕ Add other @app.route blocks here as needed...
+# Additional routes should go here...
 
 @app.route("/")
 def index():
@@ -114,13 +117,13 @@ def index():
     except Exception as e:
         return jsonify({ "error": "index.html not found", "details": str(e) })
 
-# 🧠 Readiness marker
+# 🧠 Flask readiness log
 @app.before_first_request
 def on_ready():
     print("✅ Flask app initialized and ready to receive requests.")
     sys.stdout.flush()
 
-# 🚀 Launch Mythiq with diagnostics
+# 🚀 Launch with full trace
 if __name__ == "__main__":
     try:
         port = int(os.environ.get("PORT", 5000))
