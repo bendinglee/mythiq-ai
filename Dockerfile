@@ -13,26 +13,27 @@ RUN apt update && apt install -y \
 # 📁 Working directory
 WORKDIR /app
 
-# 🧪 Copy requirements for faster layer caching
+# 🧪 Copy requirements first for caching
 COPY requirements.txt ./
 
-# 🎯 Create virtual environment and install dependencies
+# 🎯 Set up Python virtual environment and install dependencies
 RUN python3 -m venv /opt/venv && \
     . /opt/venv/bin/activate && \
     pip install --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
-# 🔗 Add full app source
+# 🔗 Copy full app source code
 COPY . /app
 
-# ✅ Activate environment
+# ✅ Activate environment path
 ENV PATH="/opt/venv/bin:$PATH"
 
-# 🚪 Dynamic port from Railway
+# 🚪 Expose dynamic Railway port
 ENV PORT=5000
 EXPOSE 5000
 
-# 🧠 Sanity check: print version and active port before launch
+# 🧠 Confirm Python is ready
 RUN python3 -V && echo "Mythiq container ready for port $PORT"
 
-# 🚀 Launch Mythiq via Gunicorn with worker resilience
+# 🚀 Launch Mythiq directly with Python for full log visibility
+CMD ["python3", "main.py"]
