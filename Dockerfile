@@ -1,25 +1,35 @@
-# 🌍 Use Railway's Nixpacks-compatible base image
-FROM ghcr.io/railwayapp/nixpacks:ubuntu-1745885067@sha256:d45c89d80e13d7ad0fd555b5130f22a866d9dd10e861f589932303ef2314c7de
+# ✅ Use a base image that includes build tools
+FROM ubuntu:22.04
+
+# 🔧 System setup
+RUN apt update && apt install -y \
+    python3 \
+    python3-pip \
+    python3-venv \
+    curl \
+    git
 
 # 📁 Set working directory
 WORKDIR /app
 
-# 📦 Copy requirements and source code
+# 📦 Copy requirements first (for layer caching)
 COPY requirements.txt ./
-COPY . /app/
 
-# ⚙️ Install dependencies in virtualenv and activate
-RUN python -m venv --copies /opt/venv && \
+# ⚙️ Install dependencies
+RUN python3 -m venv /opt/venv && \
     . /opt/venv/bin/activate && \
     pip install --upgrade pip && \
     pip install -r requirements.txt
 
-# 🛠️ Ensure PATH includes venv binaries
-RUN printf '\nPATH=/opt/venv/bin:$PATH' >> /root/.profile
+# 🧠 Add rest of the app
+COPY . /app
 
-# 🚪 Expose port for Railway healthcheck
+# ⚙️ Activate venv at runtime
+ENV PATH="/opt/venv/bin:$PATH"
+
+# 🚪 Expose port for Railway compatibility
 ENV PORT=5000
 EXPOSE 5000
 
-# 🚀 Start app using Gunicorn and your dynamic port detection
+# 🚀 Launch Mythiq
 CMD ["gunicorn", "main:app", "-b", "0.0.0.0:$PORT"]
