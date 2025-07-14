@@ -24,7 +24,7 @@ except Exception as e:
 
 # 🔗 Blueprint registration
 try:
-    # Core cognition
+    # Core cognition modules
     from branches.math_solver.solver import solve_math_query
     from branches.general_knowledge.query import answer_general_knowledge
     from branches.semantic_search.query_router import query_fuzzy_route
@@ -39,7 +39,7 @@ try:
     from branches.seo_master.routes import optimize_keywords_route
     from branches.uncertainty_detector.confidence_overlay import confidence_score
 
-    # Generation
+    # Image & video generation
     from branches.image_generator.routes import generate_image_route
     from branches.image_synth.routes import image_api
     from branches.visual_creator.routes import visual_api
@@ -70,7 +70,7 @@ try:
     app.register_blueprint(dataset_api)
     app.register_blueprint(templates_api)
 
-    # Phase 1–4
+    # Core feature phases
     from branches.creator_mode.routes import creator_api
     from branches.dashboard_viewer.routes import dashboard_api
     from branches.tutorial_mode.routes import tutorial_api
@@ -84,51 +84,42 @@ try:
     app.register_blueprint(diagnostics_api)
     app.register_blueprint(tuner_api)
 
-    # Phase 5
+    # Advanced dispatch
     from branches.dispatch_optimizer.routes import dispatch_optimizer_api
     app.register_blueprint(dispatch_optimizer_api)
 
-    # Phase 12
+    # Orchestration and interface
     from branches.interface_core.routes import interface_api
     app.register_blueprint(interface_api)
 
-    # Phase 2 plugin store
     from branches.plugin_api_store.routes import plugin_store_api
     app.register_blueprint(plugin_store_api)
 
-    # Phase 7–10 internal logic used for dispatch
     from branches.reflex_trainer.response_rewriter import rewrite
     from branches.reflex_trainer.emotion_tagger import tag
     from branches.cortex_fusion.task_dispatcher import dispatch as dispatch_task
     from branches.cortex_fusion.load_balancer import balance
     from branches.cortex_fusion.fallback_router import reroute
 
-    # Routing
     from branches.intent_engine.routes import intent_api
     from branches.memory_core.session_tracker import current_session
     from branches.vector_store.vector_interpreter import interpret_query
-    app.register_blueprint(intent_api)
-
-    # Orchestration
     from branches.brain_orchestrator.routes import brain_api
+    app.register_blueprint(intent_api)
     app.register_blueprint(brain_api)
 
     print("✅ All branches injected successfully.")
 except Exception as e:
     print("❌ Branch registration failed:", traceback.format_exc())
 
-# 🌐 API routes
-
+# 🌐 API Routes
 @app.route("/api/status", methods=["GET"])
 def status():
-    try:
-        return jsonify({
-            "status": "ok",
-            "message": "Mythiq backend healthy ✅",
-            "timestamp": time.time()
-        })
-    except Exception as e:
-        return jsonify({ "status": "error", "message": str(e) }), 500
+    return jsonify({
+        "status": "ok",
+        "message": "Mythiq backend healthy ✅",
+        "timestamp": time.time()
+    })
 
 @app.route("/api/solve-math", methods=["POST"])
 def solve_math():
@@ -200,7 +191,6 @@ def dispatch_reflex():
         enriched["output"] = rewritten
         enriched["meta"]["emotion_tag"] = emotion
         enriched["meta"]["final_task_route"] = final_route.get("fallback")
-
         return jsonify({ "success": True, "result": enriched })
     except Exception as e:
         return jsonify({ "success": False, "error": str(e) }), 500
@@ -232,25 +222,21 @@ def vector_search():
 def index():
     return render_template("index.html")
 
+# 🚀 Launch Mythiq with route trace and healthcheck confirmation
 if __name__ == "__main__":
     try:
         port = int(os.environ.get("PORT", 5000))
-        print(f"🟢 Mythiq running at http://0.0.0.0:{port}")
+        print(f"🟢 Mythiq launching at http://0.0.0.0:{port}")
 
-        # Sanity check: confirm /api/status route is registered
         with app.test_request_context():
-            status_rule = next((rule.rule for rule in app.url_map.iter_rules() if "/api/status" in rule.rule), None)
-            if status_rule:
-                print("✅ /api/status endpoint detected — Railway healthcheck should pass")
-            else:
-                print("❌ /api/status not registered — check Blueprint or route function")
+            status_ok = "/api/status" in [r.rule for r in app.url_map.iter_rules()]
+            print("✅ /api/status registered" if status_ok else "❌ /api/status NOT found")
+
+        print("🔍 Registered routes:")
+        for rule in app.url_map.iter_rules():
+            print(f"• {rule.rule} [{', '.join(rule.methods)}]")
 
         app.run(host="0.0.0.0", port=port)
 
     except Exception as e:
-        print(f"❌ Flask startup failed: {e}")
-
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    print(f"🟢 Running at http://localhost:{port}")
-    app.run(host="0.0.0.0", port=port)
+        print(f"❌ Flask failed to launch: {e}")
