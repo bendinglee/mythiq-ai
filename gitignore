@@ -1,51 +1,45 @@
-# Python
+# 🍃 Python Bytecode & Compiled Files
 __pycache__/
 *.py[cod]
 *$py.class
-*.so
-.Python
+
+# 🧪 Testing Artifacts & Builds
 build/
-develop-eggs/
 dist/
 downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
 *.egg-info/
+.eggs/
+wheels/
 .installed.cfg
 *.egg
 
-# Virtual environments
+# 🧠 Virtual Environments
 .env
-.venv
-env/
+.venv/
 venv/
+env/
 ENV/
 env.bak/
 venv.bak/
 
-# Database files
+# 🗄️ Database Files
 *.db
 *.sqlite3
 
-# Output directories
+# 📤 Output & Logging
 outputs/
 temp/
 logs/
+.cache/
 
-# IDE
+# 💻 IDE & Editor Config
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
 
-# OS
+# 💽 System Files (macOS / Windows)
 .DS_Store
 .DS_Store?
 ._*
@@ -54,6 +48,5 @@ logs/
 ehthumbs.db
 Thumbs.db
 
-# Railway
+# 🚀 Railway Metadata
 .railway/
-
