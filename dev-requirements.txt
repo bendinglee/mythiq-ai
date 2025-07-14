@@ -1,0 +1,18 @@
+# 🧪 Testing & Debugging
+pytest>=7.4.0
+coverage>=7.4.0
+debugpy>=1.8.0
+
+# 🧹 Formatting & Linting
+black>=24.3.0
+flake8>=7.0.0
+isort>=5.12.0
+
+# 🔍 Dev Logging & Visualization
+rich>=13.5.2
+loguru>=0.7.2
+watchdog>=4.0.0
+
+# 📚 Typing & CLI Enhancements
+pydantic>=2.5.3
+click>=8.1.7
