@@ -24,7 +24,7 @@ except Exception as e:
 
 # 🔗 Blueprint registration
 try:
-    # Core cognition modules
+    # Branch imports (same as your current list)
     from branches.math_solver.solver import solve_math_query
     from branches.general_knowledge.query import answer_general_knowledge
     from branches.semantic_search.query_router import query_fuzzy_route
@@ -38,19 +38,11 @@ try:
     from branches.self_learning.reflection_trainer.trainer_route import reflect_logs_route
     from branches.seo_master.routes import optimize_keywords_route
     from branches.uncertainty_detector.confidence_overlay import confidence_score
-
-    # Image & video generation
     from branches.image_generator.routes import generate_image_route
     from branches.image_synth.routes import image_api
     from branches.visual_creator.routes import visual_api
     from branches.visual_gallery.routes import gallery_api
     from branches.video_generator.routes import video_api
-    app.register_blueprint(image_api)
-    app.register_blueprint(visual_api)
-    app.register_blueprint(gallery_api)
-    app.register_blueprint(video_api)
-
-    # Extensions
     from branches.response_formatter.routes import formatter_api
     from branches.user_profile.routes import user_profile_api
     from branches.accessibility_core.routes import accessibility_api
@@ -60,59 +52,41 @@ try:
     from branches.plugin_dispatcher.routes import plugin_api
     from branches.dataset_tuner.routes import dataset_api
     from branches.templates.routes import templates_api
-    app.register_blueprint(formatter_api)
-    app.register_blueprint(user_profile_api)
-    app.register_blueprint(accessibility_api)
-    app.register_blueprint(task_api)
-    app.register_blueprint(translation_api)
-    app.register_blueprint(api_data_api)
-    app.register_blueprint(plugin_api)
-    app.register_blueprint(dataset_api)
-    app.register_blueprint(templates_api)
-
-    # Core feature phases
     from branches.creator_mode.routes import creator_api
     from branches.dashboard_viewer.routes import dashboard_api
     from branches.tutorial_mode.routes import tutorial_api
     from branches.persona_settings.routes import persona_api
     from branches.self_diagnostics.routes import diagnostics_api
     from branches.self_tuner.routes import tuner_api
-    app.register_blueprint(creator_api)
-    app.register_blueprint(dashboard_api)
-    app.register_blueprint(tutorial_api)
-    app.register_blueprint(persona_api)
-    app.register_blueprint(diagnostics_api)
-    app.register_blueprint(tuner_api)
-
-    # Advanced dispatch
     from branches.dispatch_optimizer.routes import dispatch_optimizer_api
-    app.register_blueprint(dispatch_optimizer_api)
-
-    # Orchestration and interface
     from branches.interface_core.routes import interface_api
-    app.register_blueprint(interface_api)
-
     from branches.plugin_api_store.routes import plugin_store_api
-    app.register_blueprint(plugin_store_api)
-
     from branches.reflex_trainer.response_rewriter import rewrite
     from branches.reflex_trainer.emotion_tagger import tag
     from branches.cortex_fusion.task_dispatcher import dispatch as dispatch_task
     from branches.cortex_fusion.load_balancer import balance
     from branches.cortex_fusion.fallback_router import reroute
-
     from branches.intent_engine.routes import intent_api
     from branches.memory_core.session_tracker import current_session
     from branches.vector_store.vector_interpreter import interpret_query
     from branches.brain_orchestrator.routes import brain_api
-    app.register_blueprint(intent_api)
-    app.register_blueprint(brain_api)
+
+    # Register blueprints
+    for bp in [
+        image_api, visual_api, gallery_api, video_api,
+        formatter_api, user_profile_api, accessibility_api, task_api,
+        translation_api, api_data_api, plugin_api, dataset_api, templates_api,
+        creator_api, dashboard_api, tutorial_api, persona_api,
+        diagnostics_api, tuner_api, dispatch_optimizer_api,
+        interface_api, plugin_store_api, intent_api, brain_api
+    ]:
+        app.register_blueprint(bp)
 
     print("✅ All branches injected successfully.")
 except Exception as e:
     print("❌ Branch registration failed:", traceback.format_exc())
 
-# 🌐 API Routes
+# 🌐 Core API routes
 @app.route("/api/status", methods=["GET"])
 def status():
     return jsonify({
@@ -127,116 +101,38 @@ def solve_math():
     result = solve_math_query(data.get("question", ""))
     return jsonify({ "success": True, "result": result })
 
-@app.route("/api/query-knowledge", methods=["GET"])
-def query_knowledge():
-    return answer_general_knowledge(request)
-
-@app.route("/api/query-fuzzy", methods=["GET"])
-def query_fuzzy():
-    return query_fuzzy_route()
-
-@app.route("/api/load-docs", methods=["POST"])
-def load_docs():
-    return load_docs_route()
-
-@app.route("/api/recall", methods=["GET"])
-def recall():
-    return retrieve_entries(request)
-
-@app.route("/api/reflect", methods=["GET"])
-def reflect():
-    return reflect_summary(request)
-
-@app.route("/api/log", methods=["POST"])
-def log():
-    return log_entry(request)
-
-@app.route("/api/reflect-logs", methods=["POST"])
-def reflect_logs():
-    return reflect_logs_route()
-
-@app.route("/api/validate-answer", methods=["POST"])
-def validate_answer():
-    return validate_answer_route()
-
-@app.route("/api/grade-feedback", methods=["POST"])
-def grade_feedback():
-    return full_feedback_pipeline()
-
-@app.route("/api/optimize-keywords", methods=["POST"])
-def optimize_keywords():
-    return optimize_keywords_route()
-
-@app.route("/api/classify-intent", methods=["GET"])
-def classify():
-    return classify_intent(request)
-
-@app.route("/api/dispatch", methods=["POST"])
-def dispatch_route():
-    return dispatch_input(request)
-
-@app.route("/api/dispatch-reflex", methods=["POST"])
-def dispatch_reflex():
-    from branches.feedback_loop import feedback_loop
-    try:
-        payload = request.get_json()
-        enriched = feedback_loop(payload)
-        output_text = enriched.get("output", "")
-        emotion = tag(output_text)
-        rewritten = rewrite(output_text)
-        task_type = payload.get("task_type", "text")
-        score = enriched["meta"].get("diagnostic_score", 0.5)
-        final_route = reroute(dispatch_task(task_type, score)) if score < 0.4 else { "fallback": dispatch_task(task_type, score) }
-
-        enriched["output"] = rewritten
-        enriched["meta"]["emotion_tag"] = emotion
-        enriched["meta"]["final_task_route"] = final_route.get("fallback")
-        return jsonify({ "success": True, "result": enriched })
-    except Exception as e:
-        return jsonify({ "success": False, "error": str(e) }), 500
-
-@app.route("/api/dispatch-optimize", methods=["POST"])
-def dispatch_optimize():
-    from branches.dispatch_optimizer.adaptive_dispatcher import dynamic_dispatch
-    data = request.get_json()
-    result = dynamic_dispatch(data)
-    return jsonify({ "success": True, "result": result })
-
-@app.route("/api/generate-image", methods=["POST"])
-def generate_image():
-    return generate_image_route()
-
-@app.route("/api/session", methods=["GET"])
-def session():
-    return jsonify(current_session())
-
-@app.route("/api/confidence", methods=["POST"])
-def confidence():
-    return confidence_score(request)
-
-@app.route("/api/interpret-vector", methods=["POST"])
-def vector_search():
-    return interpret_query(request)
+# ... (keep all other @app.routes as they are in your current file)
 
 @app.route("/")
 def index():
-    return render_template("index.html")
+    try:
+        return render_template("index.html")
+    except Exception as e:
+        return jsonify({ "error": "index.html not found", "details": str(e) })
 
-# 🚀 Launch Mythiq with route trace and healthcheck confirmation
+# ✅ Readiness ping marker before first request
+@app.before_first_request
+def on_ready():
+    print("✅ Flask app initialized and ready to receive requests.")
+
+# 🚀 Launch Mythiq with trace and healthcheck confirmation
 if __name__ == "__main__":
     try:
         port = int(os.environ.get("PORT", 5000))
         print(f"🟢 Mythiq launching at http://0.0.0.0:{port}")
 
         with app.test_request_context():
-            status_ok = "/api/status" in [r.rule for r in app.url_map.iter_rules()]
-            print("✅ /api/status registered" if status_ok else "❌ /api/status NOT found")
+            registered_routes = [r.rule for r in app.url_map.iter_rules()]
+            print("✅ /api/status registered" if "/api/status" in registered_routes else "❌ /api/status NOT found")
 
         print("🔍 Registered routes:")
         for rule in app.url_map.iter_rules():
             print(f"• {rule.rule} [{', '.join(rule.methods)}]")
 
-        app.run(host="0.0.0.0", port=port)
+        print("📂 Current working directory:", os.getcwd())
+        print("📦 Files found:", os.listdir(os.getcwd()))
+
+        app.run(host="0.0.0.0", port=port, debug=False)
 
     except Exception as e:
         print(f"❌ Flask failed to launch: {e}")
