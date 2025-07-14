@@ -2,14 +2,15 @@ from flask import Flask, request, jsonify, render_template
 import os, traceback, time, sys
 from dotenv import load_dotenv
 
-# 🐉 Mythiq entrypoint marker
-print("🐉 Mythiq entrypoint hit — Python is live")
+# 🐉 Entrypoint marker — triggers if container reaches Python execution
+print("🐉 Mythiq entrypoint reached — Python is live")
 sys.stdout.flush()
 
 # 🔐 Load environment variables
 load_dotenv()
 HF_TOKEN = os.getenv("HF_TOKEN")
 WOLFRAM_APP_ID = os.getenv("WOLFRAM_APP_ID")
+
 print("🚀 Mythiq ignition sequence started.")
 print("HF_TOKEN present:", bool(HF_TOKEN))
 print("WOLFRAM_APP_ID present:", bool(WOLFRAM_APP_ID))
@@ -18,7 +19,7 @@ sys.stdout.flush()
 # ✅ Initialize Flask
 app = Flask(__name__, static_url_path="/static")
 
-# 🔁 Inject dynamic modules
+# 🔁 Dynamic module injection
 try:
     from branches import init_modules
     init_modules(app)
@@ -28,7 +29,7 @@ except Exception as e:
     print("❌ Module injection failed:", traceback.format_exc())
     sys.stdout.flush()
 
-# 🔗 Register blueprints
+# 🔗 Blueprint registration
 try:
     from branches.math_solver.solver import solve_math_query
     from branches.general_knowledge.query import answer_general_knowledge
@@ -92,7 +93,7 @@ except Exception as e:
     print("❌ Branch registration failed:", traceback.format_exc())
     sys.stdout.flush()
 
-# 🌐 Core API routes
+# 🌐 Healthcheck route
 @app.route("/api/status", methods=["GET"])
 def status():
     return jsonify({
@@ -101,14 +102,14 @@ def status():
         "timestamp": time.time()
     })
 
+# ➗ Math solver route
 @app.route("/api/solve-math", methods=["POST"])
 def solve_math():
     data = request.get_json()
     result = solve_math_query(data.get("question", ""))
     return jsonify({ "success": True, "result": result })
 
-# ➕ Add additional @app.route blocks as needed...
-
+# 🧭 Landing route
 @app.route("/")
 def index():
     try:
@@ -116,22 +117,20 @@ def index():
     except Exception as e:
         return jsonify({ "error": "index.html not found", "details": str(e) })
 
-# 🧠 Flask readiness marker
+# 🧠 Readiness ping before first request
 @app.before_first_request
 def on_ready():
     print("✅ Flask app initialized and ready to receive requests.")
     sys.stdout.flush()
 
-# 🧪 Optional route trace toggle for debugging
+# 🧪 Route debugger toggle
 if os.getenv("TRACE_ROUTES") == "true":
     with app.test_request_context():
-        registered_routes = [r.rule for r in app.url_map.iter_rules()]
-        print("✅ /api/status registered" if "/api/status" in registered_routes else "❌ /api/status NOT found")
+        routes = list(app.url_map.iter_rules())
         print("🔍 Registered routes:")
-        for rule in app.url_map.iter_rules():
-            print(f"• {rule.rule} [{', '.join(rule.methods)}]")
+        for r in routes:
+            print(f"• {r.rule} [{', '.join(r.methods)}]")
+        print("✅ /api/status present" if any(r.rule == "/api/status" for r in routes) else "❌ /api/status NOT found")
+        print("📂 Working directory:", os.getcwd())
+        print("📦 Files found:", os.listdir(os.getcwd()))
         sys.stdout.flush()
-
-    print("📂 Current working directory:", os.getcwd())
-    print("📦 Files found:", os.listdir(os.getcwd()))
-    sys.stdout.flush()
