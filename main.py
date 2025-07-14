@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify, render_template
-import os, traceback
+import os, traceback, time
 from dotenv import load_dotenv
 
 # 🔐 Environment setup
@@ -96,8 +96,6 @@ try:
     from branches.plugin_api_store.routes import plugin_store_api
     app.register_blueprint(plugin_store_api)
 
-    # Phase 6 served via Railway static (creator UI)
-
     # Phase 7–10 internal logic used for dispatch
     from branches.reflex_trainer.response_rewriter import rewrite
     from branches.reflex_trainer.emotion_tagger import tag
@@ -123,7 +121,14 @@ except Exception as e:
 
 @app.route("/api/status", methods=["GET"])
 def status():
-    return jsonify({ "status": "ok", "message": "Mythiq backend running ✅" })
+    try:
+        return jsonify({
+            "status": "ok",
+            "message": "Mythiq backend healthy ✅",
+            "timestamp": time.time()
+        })
+    except Exception as e:
+        return jsonify({ "status": "error", "message": str(e) }), 500
 
 @app.route("/api/solve-math", methods=["POST"])
 def solve_math():
@@ -230,5 +235,6 @@ def index():
 print("🎯 Mythiq operational — launching Flask...")
 
 if __name__ == "__main__":
-    print("🟢 Running at http://localhost:5000")
-    app.run(host="0.0.0.0", port=5000)
+    port = int(os.environ.get("PORT", 5000))
+    print(f"🟢 Running at http://localhost:{port}")
+    app.run(host="0.0.0.0", port=port)
