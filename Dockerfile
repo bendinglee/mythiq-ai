@@ -32,8 +32,11 @@ ENV PATH="/opt/venv/bin:$PATH"
 ENV PORT=5000
 EXPOSE 5000
 
-# 🧠 Confirm Python is ready
-RUN python3 -V && echo "Mythiq container ready for port $PORT"
+# 🧠 Print version and verify entrypoint file
+RUN python3 -V && \
+    echo "Mythiq container ready for port $PORT" && \
+    echo "📂 Contents of /app:" && \
+    ls -al /app
 
 # 🚀 Launch Mythiq directly with Python for full log visibility
 CMD ["python3", "main.py"]
