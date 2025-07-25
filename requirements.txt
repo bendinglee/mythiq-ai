@@ -1,0 +1,23 @@
+# Core Flask application
+Flask==3.0.0
+Flask-CORS==4.0.0
+
+# HTTP requests and async support
+requests==2.31.0
+aiohttp==3.9.1
+
+# Data handling
+python-dotenv==1.0.0
+
+# Development and testing (optional)
+pytest==7.4.3
+pytest-cov==4.1.0
+
+# Future AI integrations (will be used in Stage 2)
+openai==1.3.0
+anthropic==0.7.0
+groq==0.4.0
+
+# Performance monitoring (will be used in Stage 2)
+psutil==5.9.6
+
