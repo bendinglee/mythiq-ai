@@ -1,125 +1,229 @@
 """
-Mythiq Configuration
-Central configuration management for the Mythiq AI platform
+Mythiq AI - Stage 2 Configuration
+Configuration settings for the emotional intelligence platform
 """
 
 import os
-from datetime import timedelta
+from typing import Dict, Any
 
 class Config:
-    """Base configuration class"""
+    """Base configuration class."""
     
-    # Flask Configuration
-    SECRET_KEY = os.environ.get('SECRET_KEY', 'mythiq-dev-key-2025-secure')
-    DEBUG = os.environ.get('FLASK_DEBUG', 'True').lower() == 'true'
+    # Application settings
+    APP_NAME = "Mythiq AI - Stage 2"
+    VERSION = "2.0.0"
+    STAGE = "Stage 2 - AI Intelligence"
     
-    # Server Configuration
-    HOST = os.environ.get('HOST', '0.0.0.0')
-    PORT = int(os.environ.get('PORT', 5000))
+    # Server settings
+    HOST = "0.0.0.0"
+    PORT = int(os.environ.get('PORT', 8080))
+    DEBUG = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
     
-    # Data Directories
-    DATA_DIR = os.environ.get('DATA_DIR', 'data')
-    LOGS_DIR = os.path.join(DATA_DIR, 'logs')
-    FEEDBACK_DIR = os.path.join(DATA_DIR, 'feedback')
-    MEMORY_FILE = os.path.join(DATA_DIR, 'memory_store.json')
+    # AI Service API Keys
+    OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
+    ANTHROPIC_API_KEY = os.environ.get('ANTHROPIC_API_KEY')
+    GROQ_API_KEY = os.environ.get('GROQ_API_KEY')
     
-    # AI Service Configuration
-    OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY', '')
-    OPENAI_API_BASE = os.environ.get('OPENAI_API_BASE', 'https://api.openai.com/v1')
-    GROQ_API_KEY = os.environ.get('GROQ_API_KEY', '')
+    # Memory settings
+    MEMORY_CONFIG = {
+        "max_conversations_per_user": 50,
+        "max_learning_patterns": 1000,
+        "memory_cleanup_interval": 3600,  # 1 hour
+        "data_retention_days": 30
+    }
     
-    # Performance Thresholds
-    RESPONSE_TIME_THRESHOLD = float(os.environ.get('RESPONSE_TIME_THRESHOLD', 5.0))
-    MEMORY_USAGE_THRESHOLD = float(os.environ.get('MEMORY_USAGE_THRESHOLD', 80.0))
-    CPU_USAGE_THRESHOLD = float(os.environ.get('CPU_USAGE_THRESHOLD', 80.0))
-    ERROR_RATE_THRESHOLD = float(os.environ.get('ERROR_RATE_THRESHOLD', 5.0))
+    # Diagnostics settings
+    DIAGNOSTICS_CONFIG = {
+        "monitoring_interval": 30,  # seconds
+        "alert_thresholds": {
+            "response_time": 5.0,  # seconds
+            "memory_usage": 80.0,  # percentage
+            "cpu_usage": 80.0,     # percentage
+            "error_rate": 10.0,    # percentage
+            "disk_usage": 90.0     # percentage
+        },
+        "performance_history_size": 1000
+    }
     
-    # Circuit Breaker Configuration
-    CIRCUIT_BREAKER_FAILURE_THRESHOLD = int(os.environ.get('CIRCUIT_BREAKER_FAILURE_THRESHOLD', 5))
-    CIRCUIT_BREAKER_TIMEOUT = int(os.environ.get('CIRCUIT_BREAKER_TIMEOUT', 60))
+    # Reasoning engine settings
+    REASONING_CONFIG = {
+        "emotion_confidence_threshold": 0.6,
+        "intent_confidence_threshold": 0.7,
+        "context_analysis_depth": 5,  # messages to analyze
+        "enable_advanced_patterns": True
+    }
     
-    # Retry Configuration
-    MAX_RETRIES = int(os.environ.get('MAX_RETRIES', 3))
-    BACKOFF_FACTOR = float(os.environ.get('BACKOFF_FACTOR', 2.0))
-    MAX_RETRY_DELAY = float(os.environ.get('MAX_RETRY_DELAY', 60.0))
+    # Chat core settings
+    CHAT_CONFIG = {
+        "max_conversation_history": 10,
+        "default_response_style": "balanced",
+        "default_personality": "balanced",
+        "enable_suggestions": True,
+        "suggestion_count": 3
+    }
     
-    # Memory Management
-    MAX_CONVERSATIONS_PER_USER = int(os.environ.get('MAX_CONVERSATIONS_PER_USER', 100))
-    MAX_LEARNING_ENTRIES_PER_CATEGORY = int(os.environ.get('MAX_LEARNING_ENTRIES_PER_CATEGORY', 1000))
-    VOLATILE_MEMORY_TTL = int(os.environ.get('VOLATILE_MEMORY_TTL', 3600))  # 1 hour
+    # AI Services settings
+    AI_SERVICES_CONFIG = {
+        "default_timeout": 30.0,
+        "max_retries": 3,
+        "rate_limit_buffer": 0.8,  # Use 80% of rate limit
+        "cost_tracking": True,
+        "prefer_free_services": True
+    }
     
-    # Monitoring Configuration
-    METRICS_COLLECTION_INTERVAL = int(os.environ.get('METRICS_COLLECTION_INTERVAL', 30))  # seconds
-    HEALTH_CHECK_INTERVAL = int(os.environ.get('HEALTH_CHECK_INTERVAL', 60))  # seconds
-    DATA_RETENTION_DAYS = int(os.environ.get('DATA_RETENTION_DAYS', 7))
+    # Reflector settings
+    REFLECTOR_CONFIG = {
+        "min_interactions_for_pattern": 5,
+        "confidence_threshold": 0.7,
+        "reflection_interval": 3600,  # 1 hour
+        "max_learning_patterns": 500,
+        "enable_auto_improvement": True
+    }
     
-    # Rate Limiting
-    RATE_LIMIT_PER_MINUTE = int(os.environ.get('RATE_LIMIT_PER_MINUTE', 60))
-    RATE_LIMIT_PER_HOUR = int(os.environ.get('RATE_LIMIT_PER_HOUR', 1000))
+    # Fallback settings
+    FALLBACK_CONFIG = {
+        "global_timeout": 30.0,
+        "max_fallback_levels": 5,
+        "adaptive_routing": True,
+        "circuit_breaker_threshold": 5,
+        "circuit_breaker_timeout": 300  # 5 minutes
+    }
     
-    # Generation Limits
-    MAX_GAME_GENERATIONS_PER_HOUR = int(os.environ.get('MAX_GAME_GENERATIONS_PER_HOUR', 10))
-    MAX_IMAGE_GENERATIONS_PER_HOUR = int(os.environ.get('MAX_IMAGE_GENERATIONS_PER_HOUR', 20))
-    MAX_VIDEO_GENERATIONS_PER_HOUR = int(os.environ.get('MAX_VIDEO_GENERATIONS_PER_HOUR', 5))
-    
-    # Security Configuration
-    ENABLE_CORS = os.environ.get('ENABLE_CORS', 'True').lower() == 'true'
-    CORS_ORIGINS = os.environ.get('CORS_ORIGINS', '*').split(',')
-    
-    # Logging Configuration
-    LOG_LEVEL = os.environ.get('LOG_LEVEL', 'INFO')
-    LOG_FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-    LOG_MAX_BYTES = int(os.environ.get('LOG_MAX_BYTES', 10485760))  # 10MB
-    LOG_BACKUP_COUNT = int(os.environ.get('LOG_BACKUP_COUNT', 5))
+    # Logging settings
+    LOGGING_CONFIG = {
+        "level": "INFO",
+        "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        "file_logging": False,
+        "log_file": "mythiq_stage2.log"
+    }
 
 class DevelopmentConfig(Config):
-    """Development configuration"""
+    """Development configuration."""
     DEBUG = True
-    LOG_LEVEL = 'DEBUG'
+    LOGGING_CONFIG = {
+        **Config.LOGGING_CONFIG,
+        "level": "DEBUG"
+    }
 
 class ProductionConfig(Config):
-    """Production configuration"""
+    """Production configuration."""
     DEBUG = False
-    LOG_LEVEL = 'WARNING'
-    
-    # Stricter thresholds for production
-    RESPONSE_TIME_THRESHOLD = 3.0
-    MEMORY_USAGE_THRESHOLD = 70.0
-    CPU_USAGE_THRESHOLD = 70.0
-    ERROR_RATE_THRESHOLD = 2.0
-    
-    # More conservative rate limits
-    RATE_LIMIT_PER_MINUTE = 30
-    RATE_LIMIT_PER_HOUR = 500
-    
-    MAX_GAME_GENERATIONS_PER_HOUR = 5
-    MAX_IMAGE_GENERATIONS_PER_HOUR = 10
-    MAX_VIDEO_GENERATIONS_PER_HOUR = 2
+    LOGGING_CONFIG = {
+        **Config.LOGGING_CONFIG,
+        "level": "WARNING",
+        "file_logging": True
+    }
 
 class TestingConfig(Config):
-    """Testing configuration"""
-    TESTING = True
+    """Testing configuration."""
     DEBUG = True
-    
-    # Use in-memory storage for testing
-    DATA_DIR = '/tmp/mythiq_test'
-    
-    # Relaxed thresholds for testing
-    RESPONSE_TIME_THRESHOLD = 10.0
-    CIRCUIT_BREAKER_FAILURE_THRESHOLD = 10
+    TESTING = True
+    MEMORY_CONFIG = {
+        **Config.MEMORY_CONFIG,
+        "max_conversations_per_user": 10,
+        "max_learning_patterns": 100
+    }
 
 # Configuration mapping
-config = {
+config_map = {
     'development': DevelopmentConfig,
     'production': ProductionConfig,
     'testing': TestingConfig,
     'default': DevelopmentConfig
 }
 
-def get_config(config_name=None):
-    """Get configuration class based on environment"""
+def get_config(config_name: str = None) -> Config:
+    """Get configuration based on environment."""
     if config_name is None:
-        config_name = os.environ.get('FLASK_ENV', 'development')
+        config_name = os.environ.get('FLASK_ENV', 'default')
     
-    return config.get(config_name, DevelopmentConfig)
+    return config_map.get(config_name, DevelopmentConfig)
 
+def get_ai_service_configs() -> Dict[str, Dict[str, Any]]:
+    """Get AI service configurations."""
+    configs = {}
+    
+    # OpenAI configuration
+    if Config.OPENAI_API_KEY:
+        configs['openai'] = {
+            'name': 'openai',
+            'api_key': Config.OPENAI_API_KEY,
+            'base_url': 'https://api.openai.com/v1',
+            'model': 'gpt-3.5-turbo',
+            'max_tokens': 1000,
+            'temperature': 0.7,
+            'timeout': 30.0,
+            'rate_limit_per_minute': 60,
+            'cost_per_1k_tokens': 0.002,
+            'priority': 2
+        }
+    
+    # Anthropic Claude configuration
+    if Config.ANTHROPIC_API_KEY:
+        configs['claude'] = {
+            'name': 'claude',
+            'api_key': Config.ANTHROPIC_API_KEY,
+            'base_url': 'https://api.anthropic.com/v1',
+            'model': 'claude-3-haiku-20240307',
+            'max_tokens': 1000,
+            'temperature': 0.7,
+            'timeout': 30.0,
+            'rate_limit_per_minute': 50,
+            'cost_per_1k_tokens': 0.00025,
+            'priority': 1  # Highest priority for emotional intelligence
+        }
+    
+    # Groq configuration
+    if Config.GROQ_API_KEY:
+        configs['groq'] = {
+            'name': 'groq',
+            'api_key': Config.GROQ_API_KEY,
+            'base_url': 'https://api.groq.com/openai/v1',
+            'model': 'llama3-8b-8192',
+            'max_tokens': 1000,
+            'temperature': 0.7,
+            'timeout': 15.0,
+            'rate_limit_per_minute': 100,
+            'cost_per_1k_tokens': 0.0,  # Free tier
+            'priority': 0  # Highest priority for speed
+        }
+    
+    return configs
+
+def validate_configuration() -> Dict[str, Any]:
+    """Validate configuration and return status."""
+    validation_results = {
+        "valid": True,
+        "warnings": [],
+        "errors": [],
+        "ai_services_configured": 0
+    }
+    
+    # Check AI service configurations
+    ai_configs = get_ai_service_configs()
+    validation_results["ai_services_configured"] = len(ai_configs)
+    
+    if not ai_configs:
+        validation_results["errors"].append("No AI services configured - check API keys")
+        validation_results["valid"] = False
+    elif len(ai_configs) == 1:
+        validation_results["warnings"].append("Only one AI service configured - limited fallback options")
+    
+    # Check required environment variables
+    required_env_vars = []
+    optional_env_vars = ['OPENAI_API_KEY', 'ANTHROPIC_API_KEY', 'GROQ_API_KEY']
+    
+    for var in required_env_vars:
+        if not os.environ.get(var):
+            validation_results["errors"].append(f"Required environment variable {var} not set")
+            validation_results["valid"] = False
+    
+    # Check if at least one AI service is configured
+    if not any(os.environ.get(var) for var in optional_env_vars):
+        validation_results["errors"].append("At least one AI service API key must be configured")
+        validation_results["valid"] = False
+    
+    return validation_results
+
+# Export main configuration
+current_config = get_config()
